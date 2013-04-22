@@ -1,0 +1,19 @@
+{
+    "username" : "test",
+    "password" : "test",
+
+    "me": [
+        "officedrive daemon", 
+        [
+            "127.0.0.1", 
+            42173
+        ]
+    ], 
+    "transponder": [
+        "officedrive plugin", 
+        [
+            "127.0.0.1", 
+            37124
+        ]
+    ]
+}

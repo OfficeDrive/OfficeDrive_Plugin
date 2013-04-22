@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="84">
+  <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
+    <df name="OfficeDrive" root=".">
+      <df name="build">
+        <df name="Debug">
+        </df>
+      </df>
+      <df name="Chrome">
+        <df name="chromepackage">
+        </df>
+      </df>
+      <df name="CMakeFiles">
+      </df>
+      <df name="Mac">
+        <df name="bundle_template">
+        </df>
+        <df name="dmg_template">
+        </df>
+        <in>DialogManagerMac.h</in>
+        <in>DialogManagerMac.mm</in>
+      </df>
+      <df name="Win">
+        <df name="WiX">
+        </df>
+        <in>DialogManagerWin.cpp</in>
+        <in>DialogManagerWin.h</in>
+      </df>
+      <df name="X11">
+        <in>DialogManagerX11.cpp</in>
+        <in>DialogManagerX11.h</in>
+      </df>
+      <df name="xpi">
+        <df name="content">
+        </df>
+      </df>
+      <in>DialogManager.h</in>
+      <in>Factory.cpp</in>
+      <in>FileWatcher.h</in>
+      <in>Server_config.h</in>
+      <in>dlfcn.h</in>
+      <in>OfficeDrive.cpp</in>
+      <in>OfficeDrive.h</in>
+      <in>OfficeDriveAPI.cpp</in>
+      <in>OfficeDriveAPI.h</in>
+      <in>unistd.h</in>
+    </df>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="false"
+                   kind="IMPORTANT_FILES_FOLDER">
+      <itemPath>CMakeLists.txt</itemPath>
+      <itemPath>Makefile</itemPath>
+    </logicalFolder>
+  </logicalFolder>
+  <sourceFolderFilter>^(nbproject)$</sourceFolderFilter>
+  <sourceRootList>
+    <Elem>.</Elem>
+  </sourceRootList>
+  <projectmakefile>Makefile</projectmakefile>
+  <confs>
+    <conf name="Default" type="0">
+      <toolsSet>
+        <remote-sources-mode>LOCAL_SOURCES</remote-sources-mode>
+        <compilerSet>VCC4N|VCC4N</compilerSet>
+      </toolsSet>
+      <codeAssistance>
+      </codeAssistance>
+      <makefileType>
+        <makeTool>
+          <buildCommandWorkingDir>.</buildCommandWorkingDir>
+          <buildCommand>${MAKE} -f Makefile</buildCommand>
+          <cleanCommand>${MAKE} -f Makefile clean</cleanCommand>
+          <executablePath></executablePath>
+        </makeTool>
+      </makefileType>
+      <item path="Factory.cpp" ex="false" tool="1" flavor2="4">
+        <ccTool>
+          <incDir>
+            <pElem></pElem>
+          </incDir>
+        </ccTool>
+      </item>
+      <item path="Mac/DialogManagerMac.mm" ex="false" tool="1" flavor2="4">
+        <ccTool>
+        </ccTool>
+      </item>
+      <item path="Win/DialogManagerWin.cpp" ex="false" tool="1" flavor2="4">
+        <ccTool>
+        </ccTool>
+      </item>
+      <item path="X11/DialogManagerX11.cpp" ex="false" tool="1" flavor2="4">
+        <ccTool>
+        </ccTool>
+      </item>
+      <folder path="OfficeDrive/Mac">
+        <ccTool>
+          <incDir>
+            <pElem>Mac</pElem>
+          </incDir>
+        </ccTool>
+      </folder>
+      <folder path="OfficeDrive/Win">
+        <ccTool>
+          <incDir>
+            <pElem>Win</pElem>
+          </incDir>
+        </ccTool>
+      </folder>
+      <folder path="OfficeDrive/X11">
+        <ccTool>
+          <incDir>
+            <pElem>X11</pElem>
+          </incDir>
+        </ccTool>
+      </folder>
+      <item path="OfficeDrive.cpp" ex="false" tool="1" flavor2="4">
+        <ccTool>
+          <incDir>
+            <pElem></pElem>
+          </incDir>
+        </ccTool>
+      </item>
+      <item path="OfficeDriveAPI.cpp" ex="false" tool="1" flavor2="4">
+        <ccTool>
+          <incDir>
+            <pElem></pElem>
+          </incDir>
+        </ccTool>
+      </item>
+    </conf>
+  </confs>
+</configurationDescriptor>

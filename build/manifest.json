@@ -1,0 +1,15 @@
+{
+  "name": "fbod",
+  "version": "0.0.0.4",
+  "manifest_version": 2,
+  "description": "OfficeDrive-NG",
+  "background": {"page" :"background.html"},
+  "icons": {"32" : "officedrive.png", 
+            "48" : "officedrive_48.png",
+            "128": "officedrive_128.png"},
+  "permissions": ["http://*/", "https://*/", "file://*/"],
+   "plugins": [
+   { "path": "npfbod.so.dll", "public": true,
+    "path": "npfbod.so", "public": true }
+  ]
+}

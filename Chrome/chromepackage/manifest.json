@@ -1,0 +1,9 @@
+{
+  "name": "OfficeDrive",
+  "version": "${FBSTRING_PLUGIN_VERSION}",
+  "description": "OfficeDrive-NG",
+
+	"plugins": [
+    { "path": "npOfficeDrive.dll", "public": true }
+  ]
+}
