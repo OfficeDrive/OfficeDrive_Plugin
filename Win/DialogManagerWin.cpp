@@ -153,7 +153,7 @@ void DialogManagerWin::_showFileDialog(HWND wnd, const std::string& path, const 
 				delete szFile;
 			}
 		} else {
-			out = FB::wstring_to_utf8(std::wstring(opf.lpstrFile));
+			out = FB::wstring_to_utf8(std::wstring(Filestring));
 		} 
     }
 
@@ -211,19 +211,16 @@ void DialogManagerWin::_showFolderDialog2(HWND wnd, const std::string& path, con
 	opf.FlagsEx |= ~OFN_EX_NOPLACESBAR;
 	
 	if ( multiple ) {
-		opf.Flags =  OFN_ENABLESIZING | OFN_ALLOWMULTISELECT | OFN_EXPLORER | OFN_NOVALIDATE | OFN_ENABLEHOOK | OFN_ENABLEINCLUDENOTIFY | OFN_HIDEREADONLY;
+		opf.Flags =  OFN_ENABLESIZING | OFN_ALLOWMULTISELECT | OFN_EXPLORER | OFN_NOVALIDATE | OFN_ENABLEHOOK | OFN_HIDEREADONLY;
 		
 	} else {
-	    opf.Flags =  OFN_ENABLESIZING | OFN_NOVALIDATE | OFN_EXPLORER | OFN_ENABLEHOOK | OFN_ENABLEINCLUDENOTIFY | OFN_HIDEREADONLY;
+	    opf.Flags =  OFN_ENABLESIZING | OFN_NOVALIDATE | OFN_EXPLORER | OFN_ENABLEHOOK | OFN_HIDEREADONLY;
 
 	}
-    
-	
-	
+ 
 	if(GetOpenFileName(&opf))
     {
-	
-		/*bool bMultipleFileSelected = (opf.lpstrFile[opf.nFileOffset - 1] == '\0');
+		bool bMultipleFileSelected = multiple;
 
 		if (bMultipleFileSelected)
 		{
@@ -240,15 +237,13 @@ void DialogManagerWin::_showFolderDialog2(HWND wnd, const std::string& path, con
 				}
 				wcscat_s(szFile, dwLen, szTemp);   
 				out += FB::wstring_to_utf8(std::wstring(szFile));
-				out += ":";
+				out += "::";
 				delete szFile;
 			}
 	} else { 
-	*/
-			//out = FB::wstring_to_utf8(std::wstring(fileString));
-		//} 
+		out = FB::wstring_to_utf8(std::wstring(Filestring));
+		} 
 	}
-	out = FB::wstring_to_utf8(std::wstring(Filestring));
     cb(out);
 }
 /*
@@ -304,7 +299,6 @@ UINT CALLBACK FolderHook (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			m_strPath = GetPath(hwnd, CDM_GETFILEPATH);
 			m_curDir = m_strPath;
 			
-			//CommDlg_OpenSave_SetControlText(hwnd, psh2, LPCSTR("Fupsh1"));
 			return FALSE;
 
 		case WM_CLOSE:	
@@ -321,68 +315,50 @@ UINT CALLBACK FolderHook (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			
 			NMHDR * pNmhdr = &lpofn->hdr;
 			HWND m_edit = GetDlgItem(pNmhdr->hwndFrom, edt1);
-			HWND m_listView = GetDlgItem(pNmhdr->hwndFrom, lst1);
+			HWND m_listView = GetDlgItem(pNmhdr->hwndFrom, lst2);
+			HWND m_sysView = GetDlgItem(m_listView, 1);
 
 			if (pNmhdr->code == CDN_SELCHANGE)
-			{ 
-				/*
-				TCHAR dummyBuffer = 1;
-
-				UINT nfiles = CommDlg_OpenSave_GetSpec(pNmhdr->hwndFrom, &dummyBuffer, 1);
-				UINT nfolders = CommDlg_OpenSave_GetFolderPath(pNmhdr->hwndFrom, &dummyBuffer, 1);
-				
-				wchar_t * m_fileBuffer = new wchar_t[(nfiles + 1)];
-				wchar_t * m_folderBuffer = new wchar_t[(nfolders + 1)];
-				
-				memset(&m_fileBuffer, 0, nfiles +1);
-				memset(&m_folderBuffer, 0, nfolders +1);
-
-				CommDlg_OpenSave_GetFolderPath(pNmhdr->hwndFrom, m_folderBuffer, nfolders);
-				CommDlg_OpenSave_GetSpec(pNmhdr->hwndFrom, m_fileBuffer, nfiles);
-				
-				
-				LPWSTR m_strInclude = NULL;
-				wsprintf(m_strInclude, L"nfolders: %d - nfiles: %d", nfolders, nfiles);
-				lpofn->lpOFN->lpstrTitle = m_strInclude;
-				*/
-
-				m_strPathList.shrink_to_fit();
-				CommDlg_OpenSave_SetControlText(pNmhdr->hwndFrom, edt1, m_strPathList.c_str());
-				memset(&m_strPathList,0, sizeof(m_strPathList));
-
-			}
-
-			if (pNmhdr->code == CDN_INCLUDEITEM)
 			{
+				LVITEM m_listItem = {0}; 
+				m_listItem.iItem = 0;
+				m_listItem.iSubItem = 0;
+				m_listItem.mask = LVIF_TEXT;
+				const int m_max = MAX_PATH * 512 - 1;
+				m_listItem.cchTextMax = MAX_PATH * 512;
+									
+				int nSelItems;
 				
-				memset(&m_strPath, 0, sizeof(m_strPath));
-				m_strPath.shrink_to_fit();
-				m_strPath = GetPath(hwnd, CDM_GETFILEPATH);
-				const int found = m_strPathList.find(m_strPath);
+				int i;
+
+				nSelItems = ListView_GetSelectedCount(m_sysView);
+				for (i = 0; i < nSelItems; i++) {
+					m_listItem.iItem = i;
+		
+					wchar_t tempsz[m_max];
+					m_listItem.pszText = LPWSTR(tempsz);
+
+					ListView_GetItem(m_sysView, &m_listItem);
+					m_strPathList += m_listItem.pszText;
 				
-				
-				if ((found == std::string::npos) && ( m_strPath != m_curDir) && (m_strPath.size() > sizeof(wchar_t) * 2)) {
-						m_strPathList += m_strPath;
 					if (lpofn->lpOFN->Flags & OFN_ALLOWMULTISELECT)  {
 						m_strPathList +=( _T("::"));
 					}
-				
-				//
 				}
-			
+				
+				CommDlg_OpenSave_SetControlText(pNmhdr->hwndFrom, edt1, m_strPathList.c_str());
+				m_strPathList.clear();
 			}
+
+	
 			else if (pNmhdr->code == CDN_FOLDERCHANGE)
 			{
-				//CommDlg_OpenSave_SetControlText(pNmhdr->hwndFrom, edt1, m_strPath.c_str());
-				
-			
-				memset(&m_strPath, 0, sizeof(m_strPath));
-				memset(&m_strPathList, 0, sizeof(m_strPathList));
+				//memset(&m_strPath, 0, sizeof(m_strPath));
+				//memset(&m_strPathList, 0, sizeof(m_strPathList));
 				m_strPath = GetPath(hwnd, CDM_GETFILEPATH);
 				m_curDir = m_strPath;
-				CommDlg_OpenSave_SetControlText(pNmhdr->hwndFrom, edt1, m_strPathList.c_str());
-
-					
+				//CommDlg_OpenSave_SetControlText(pNmhdr->hwndFrom, edt1, m_strPathList.c_str());
+		
 			}
 			return FALSE;
 	}
