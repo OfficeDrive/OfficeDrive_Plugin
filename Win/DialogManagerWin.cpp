@@ -17,11 +17,13 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-
-#include "win_common.h"
+#include "atlbase.h"
+//#include "win_common.h"
 //#include <commdlg.h>
-
+#include "atlapp.h"
+#include "atldlgs.h"
 #include <string>
+
 #include <boost/thread.hpp>
 #include "utf8_tools.h"
 #include "Win/PluginWindowlessWin.h"
@@ -56,7 +58,7 @@ void DialogManagerWin::OpenFolderDialog(const FB::BrowserHostPtr& host, FB::Plug
 
     HWND browserWindow = wndWin ? wndWin->getBrowserHWND() : wndlessWin->getHWND();
     //HWND browserWindow =  wndWin->getBrowserHWND();
-	boost::thread dlgThread(&DialogManagerWin::_showFolderDialog2, this, browserWindow, "*.*", "Select Folders", cb, multiple);
+	boost::thread dlgThread(&DialogManagerWin::_showFolderDialog2, this, browserWindow, "*.*", fileType, cb, multiple);
 	
 }
 
@@ -157,7 +159,7 @@ void DialogManagerWin::_showFileDialog(HWND wnd, const std::string& path, const 
 
     cb(out);
 }
-void DialogManagerWin::_showFolderDialog2(HWND wnd, const std::string& path, const std::string& filter, const PathCallback& cb, const bool multiple)
+void DialogManagerWin::_showFolderDialog2(HWND wnd, const std::string& path, const int fileType, const PathCallback& cb, const bool multiple)
 {
     wchar_t Filestring[MAX_PATH * 512];
 	memset(&Filestring, 0, sizeof(Filestring));
@@ -168,8 +170,8 @@ void DialogManagerWin::_showFolderDialog2(HWND wnd, const std::string& path, con
 
 	std::string out;
 
-    std::wstring wFilter(FB::utf8_to_wstring(filter));
-    std::wstring wPath(FB::utf8_to_wstring(filter));
+    //std::wstring wFilter(FB::utf8_to_wstring(filter));
+    //std::wstring wPath(FB::utf8_to_wstring(filter));
  
 	OPENFILENAME opf;
 	opf.lStructSize = sizeof(OPENFILENAME);
@@ -179,8 +181,15 @@ void DialogManagerWin::_showFolderDialog2(HWND wnd, const std::string& path, con
 	//opf.lStructSize =  OPENFILENAME_SIZE_VERSION_400W; 
 	//opf.lpTemplateName = NULL;
 	opf.hwndOwner = wnd;
-    //opf.lpstrFilter = L"All Files\0*.*\0\0";
-    opf.lpstrFilter = L"Folders Only\0___.__\0";
+
+	if (fileType == 2) {
+		opf.lpstrFilter = L"Folders Only\0___.__\0";
+		opf.lpstrTitle = L"Select folders...";
+	} else {
+		opf.lpstrFilter = L"All Files\0*.*\0\0";
+		opf.lpstrTitle = L"Select folders and files...";
+	}			
+    
 	opf.lpstrCustomFilter = 0;
     opf.nMaxCustFilter = 0L;
     opf.nFilterIndex = 1L;
@@ -203,10 +212,10 @@ void DialogManagerWin::_showFolderDialog2(HWND wnd, const std::string& path, con
 	
 	if ( multiple ) {
 		opf.Flags =  OFN_ENABLESIZING | OFN_ALLOWMULTISELECT | OFN_EXPLORER | OFN_NOVALIDATE | OFN_ENABLEHOOK | OFN_ENABLEINCLUDENOTIFY | OFN_HIDEREADONLY;
-		opf.lpstrTitle = L"Select folders...";
+		
 	} else {
 	    opf.Flags =  OFN_ENABLESIZING | OFN_NOVALIDATE | OFN_EXPLORER | OFN_ENABLEHOOK | OFN_ENABLEINCLUDENOTIFY | OFN_HIDEREADONLY;
-		opf.lpstrTitle = L"Select a folder...";
+
 	}
     
 	
@@ -214,7 +223,7 @@ void DialogManagerWin::_showFolderDialog2(HWND wnd, const std::string& path, con
 	if(GetOpenFileName(&opf))
     {
 	
-		bool bMultipleFileSelected = (opf.lpstrFile[opf.nFileOffset - 1] == '\0');
+		/*bool bMultipleFileSelected = (opf.lpstrFile[opf.nFileOffset - 1] == '\0');
 
 		if (bMultipleFileSelected)
 		{
@@ -235,9 +244,11 @@ void DialogManagerWin::_showFolderDialog2(HWND wnd, const std::string& path, con
 				delete szFile;
 			}
 	} else { 
-			out = FB::wstring_to_utf8(std::wstring(opf.lpstrFile));
-		} 
+	*/
+			//out = FB::wstring_to_utf8(std::wstring(fileString));
+		//} 
 	}
+	out = FB::wstring_to_utf8(std::wstring(Filestring));
     cb(out);
 }
 /*
@@ -284,10 +295,14 @@ UINT CALLBACK FolderHook (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch(message)
 	{
-		case WM_COMMAND:
-			return TRUE;
+		//case WM_COMMAND:
+			//return TRUE;
 	
 		case WM_INITDIALOG:
+			memset(&m_strPathList,0, sizeof(m_strPathList));
+			memset(&m_strPath,0, sizeof(m_strPath));
+			m_strPath = GetPath(hwnd, CDM_GETFILEPATH);
+			m_curDir = m_strPath;
 			
 			//CommDlg_OpenSave_SetControlText(hwnd, psh2, LPCSTR("Fupsh1"));
 			return FALSE;
@@ -331,43 +346,41 @@ UINT CALLBACK FolderHook (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				lpofn->lpOFN->lpstrTitle = m_strInclude;
 				*/
 
-				if (m_folderChange)	{
-					if (m_strPath != m_curDir) {
-						m_strPathList = m_strPath;
-						
-					} else {
-						memset(&m_strPathList,0, sizeof(m_strPathList));
-					}
-					m_folderChange = false;
-				}
+				m_strPathList.shrink_to_fit();
 				CommDlg_OpenSave_SetControlText(pNmhdr->hwndFrom, edt1, m_strPathList.c_str());
 				memset(&m_strPathList,0, sizeof(m_strPathList));
-				
+
 			}
 
 			if (pNmhdr->code == CDN_INCLUDEITEM)
 			{
 				
 				memset(&m_strPath, 0, sizeof(m_strPath));
+				m_strPath.shrink_to_fit();
 				m_strPath = GetPath(hwnd, CDM_GETFILEPATH);
+				const int found = m_strPathList.find(m_strPath);
 				
-				if ( m_strPath.length() > 1 && m_strPath != m_curDir) {
-						m_strPathList.append(m_strPath);
+				
+				if ((found == std::string::npos) && ( m_strPath != m_curDir) && (m_strPath.size() > sizeof(wchar_t) * 2)) {
+						m_strPathList += m_strPath;
 					if (lpofn->lpOFN->Flags & OFN_ALLOWMULTISELECT)  {
-						m_strPathList.append( _T(":"));
+						m_strPathList +=( _T("::"));
 					}
-				} else {
-					memset(&m_strPathList,0, sizeof(m_strPathList));
+				
+				//
 				}
 			
 			}
 			else if (pNmhdr->code == CDN_FOLDERCHANGE)
 			{
 				//CommDlg_OpenSave_SetControlText(pNmhdr->hwndFrom, edt1, m_strPath.c_str());
-				m_folderChange = true;
-				m_curDir = m_strPath;
+				
+			
 				memset(&m_strPath, 0, sizeof(m_strPath));
 				memset(&m_strPathList, 0, sizeof(m_strPathList));
+				m_strPath = GetPath(hwnd, CDM_GETFILEPATH);
+				m_curDir = m_strPath;
+				CommDlg_OpenSave_SetControlText(pNmhdr->hwndFrom, edt1, m_strPathList.c_str());
 
 					
 			}
@@ -379,14 +392,17 @@ UINT CALLBACK FolderHook (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 std::wstring GetPath(HWND hwnd, UINT nMessage)
 {
 	LPCTSTR strPath = _T("");
+	TCHAR szDir[MAX_PATH * 512];
+	memset(&szDir,0, sizeof(szDir));	
+	memset(&strPath,0, sizeof(strPath));
 	
 	HWND pWnd = GetParent(hwnd);
 
 	if (pWnd && IsWindow(pWnd))
 	{
-		TCHAR szDir[MAX_PATH*3];
-		memset(&szDir,0, sizeof(szDir));
-		szDir[0] = _T('\0');
+		
+		//
+		//szDir[0] = _T('\0');
 		SendMessage(pWnd, nMessage, sizeof(szDir)/sizeof(TCHAR)-2,
 			(LPARAM)(LPCTSTR)szDir);
 		szDir[sizeof(szDir)/sizeof(TCHAR)-1] = _T('\0');

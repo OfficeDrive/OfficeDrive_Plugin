@@ -240,10 +240,11 @@ void OfficeDriveAPI::launchFileSelect(int fileType, bool multiple, int fileOpera
 {
     DialogManager* dlgMgr = DialogManager::get();
     OfficeDrivePtr plugin = getPlugin();
-	if ( fileType == 2) {
-	dlgMgr->OpenFolderDialog(m_host, plugin->GetWindow(), boost::bind(&OfficeDriveAPI::fileSelectCallback, this, _1, callback), fileType, multiple, fileOperation);
+	if ( fileType == 1) {
+		dlgMgr->OpenFileDialog(m_host, plugin->GetWindow(), boost::bind(&OfficeDriveAPI::fileSelectCallback, this, _1, callback), fileType, multiple, fileOperation);
 	} else {
-	    dlgMgr->OpenFileDialog(m_host, plugin->GetWindow(), boost::bind(&OfficeDriveAPI::fileSelectCallback, this, _1, callback), fileType, multiple, fileOperation);
+		dlgMgr->OpenFolderDialog(m_host, plugin->GetWindow(), boost::bind(&OfficeDriveAPI::fileSelectCallback, this, _1, callback), fileType, multiple, fileOperation);
+	    
 	}
 }
 void OfficeDriveAPI::fileSelectCallback(const std::string &path, FB::JSObjectPtr callback)

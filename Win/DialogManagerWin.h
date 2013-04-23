@@ -49,7 +49,7 @@ protected:
 	
     void _showFileDialog(HWND wnd, const std::string& path, const std::string& filter, const PathCallback& cb, const bool multiple);
     void _showFolderDialog(HWND wnd, const PathCallback& cb);
-	void _showFolderDialog2(HWND wnd, const std::string& path, const std::string& filter, const PathCallback& cb, const bool multiple );
+	void _showFolderDialog2(HWND wnd, const std::string& path, const int fileType, const PathCallback& cb, const bool multiple );
 	
     friend class DialogManager;
 
