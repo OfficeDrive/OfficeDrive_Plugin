@@ -86,7 +86,7 @@ void OfficeDriveAPI::connect2()
 		uid = *userId;
 	}
 
-	m_host->createStream(FB::URI::url_decode("http://localhost:8000/&userId=" + uid),eventSinkPtr,0);
+	m_host->createStream(FB::URI::url_decode("http://localhost:8881/&userId=" + uid),eventSinkPtr,0);
 
 }
 	
@@ -99,7 +99,7 @@ int OfficeDriveAPI::connect()
 	if (userId) {
 		postdata = *userId;
 	}
-	result = FB::SimpleStreamHelper::AsyncPost(m_host, FB::URI::url_decode("http://localhost:8000/cmd"), 
+	result = FB::SimpleStreamHelper::AsyncPost(m_host, FB::URI::url_decode("http://localhost:8881/cmd"), 
 												postdata, 
 												boost::bind(&OfficeDriveAPI::connectCallback, this, _1,_2,_3,_4));
 	return result;
