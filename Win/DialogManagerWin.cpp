@@ -297,7 +297,7 @@ void DialogManagerWin::_showFileDialog(HWND wnd, const std::string& path, const 
     opf.nFilterIndex = 1L;
 	opf.lpstrFile = Filestring;
     opf.lpstrFile[0] = '\0';
-    opf.nMaxFile = 500 * MAX_PATH;
+    opf.nMaxFile = 512 * MAX_PATH;
     opf.lpstrFileTitle = 0;
     opf.nMaxFileTitle= 260;
     opf.lpstrInitialDir = wPath.c_str();
@@ -316,7 +316,8 @@ void DialogManagerWin::_showFileDialog(HWND wnd, const std::string& path, const 
 	    opf.Flags = (OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT| OFN_NOVALIDATE) & ~OFN_ALLOWMULTISELECT;
 	}
 	if (fileOperation == 2) {
-		BOOL result = GetSaveFileName(&opf);
+		bool result;
+		result = GetSaveFileName(&opf);
 		if (!result ) {
 			out = "Failed.";
 			cb(out);
@@ -382,16 +383,19 @@ void DialogManagerWin::_showFolderDialog2(HWND wnd, const std::string& path, con
 		
 	}
 	if (SUCCEEDED(hr))
-        {	 // Create an event handling object, and hook it up to the dialog.
+        {	
+			// Create an event handling object, and hook it up to the dialog.
 			IFileDialogEvents *pfde = NULL;
 			hr = CDialogEventHandler_CreateInstance(IID_PPV_ARGS(&pfde));
+			
 			// Set up a Customization.
 			IFileDialogCustomize *pfdc = NULL;
 			hr = ptr->QueryInterface(IID_PPV_ARGS(&pfdc));
+			
 			// Create a Visual Group.
 			hr = pfdc->StartVisualGroup(CONTROL_GROUP, L"OfficeDrive");
-			//hr = pfdc->AddControlItem(CONTROL_LIST, lst1, L"Customize");
-           // hr = pfdc->SetControlState(CONTROL_LIST, CDCS_VISIBLE | CDCS_ENABLED);
+			// hr = pfdc->AddControlItem(CONTROL_LIST, lst1, L"Customize");
+            // hr = pfdc->SetControlState(CONTROL_LIST, CDCS_VISIBLE | CDCS_ENABLED);
 
 		if (SUCCEEDED(hr)) 
 			{
@@ -402,8 +406,6 @@ void DialogManagerWin::_showFolderDialog2(HWND wnd, const std::string& path, con
             if (SUCCEEDED(hr))
             {
                 // Set the options on the dialog.
-               
-                // Before setting, always get the options first in order not to override existing options.
                 hr = ptr->GetOptions(&dwFlags);
                 if (SUCCEEDED(hr))
                 {
@@ -415,25 +417,19 @@ void DialogManagerWin::_showFolderDialog2(HWND wnd, const std::string& path, con
 						  hr = ptr->GetOptions(&dwFlags);					 
 						  hr = ptr->SetOptions(dwFlags | FOS_PICKFOLDERS);
 					}
-                    // hr = ptr->SetOptions(dwFlags);
 					// hr = ptr->SetOptions(dwFlags | FOS_FORCEFILESYSTEM | FOS_NOVALIDATE | FOS_ALLOWMULTISELECT);
                     if (SUCCEEDED(hr))
-                    {
-                     // Set the file types to display only. Notice that, this is a 1-based array.
 						//hr = ptr->SetFileTypes(ARRAYSIZE(c_rgSaveTypes), c_rgSaveTypes);
 						if (SUCCEEDED(hr))
                         {
-                     
                           //  hr = ptr->SetFileTypeIndex(4);
                             if (SUCCEEDED(hr))
                             {
-                                // Set the default extension to be ".doc" file.
                                 //hr = ptr->SetDefaultExtension(L"");
                                 if (SUCCEEDED(hr))
                                 {
                                     // Show the dialog
-									
-									
+					
                                     hr = ptr->Show(wnd);
                                     if (SUCCEEDED(hr))
                                     {
@@ -481,11 +477,10 @@ void DialogManagerWin::_showFolderDialog2(HWND wnd, const std::string& path, con
 		} 
         ptr->Release();
 	}
+
 	//out = FB::wstring_to_utf8(std::wstring(pszFilePath));
     
-								
-	
- //   {
+    //   {
 	//	bool bMultipleFileSelected = multiple;
 
 	//	if (bMultipleFileSelected)
@@ -511,8 +506,6 @@ void DialogManagerWin::_showFolderDialog2(HWND wnd, const std::string& path, con
 	//	} 
 	//}
 	
-}
-/*
 UINT CALLBACK OFNHookProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	HWND hWp, hWlv;
@@ -550,7 +543,6 @@ UINT CALLBACK OFNHookProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	}
 	return false;
 }
-*/
 
 UINT CALLBACK FolderHook (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
