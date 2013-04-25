@@ -53,7 +53,7 @@ const COMDLG_FILTERSPEC c_rgSaveTypes[] =
     {L"Web Page (*.htm; *.html)",    L"*.htm;*.html"},
     {L"Text Document (*.txt)",       L"*.txt"},
     {L"All Documents (*.*)",         L"*.*"},
-	{L"Files and Folders (*)",		 L"*.*"}
+    {L"Files and Folders (*)",		 L"*.*"}
 };
 
 // Indices of file types
