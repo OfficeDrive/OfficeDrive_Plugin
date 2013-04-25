@@ -17,6 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+
 #include "atlbase.h"
 //#include "win_common.h"
 //#include <commdlg.h>
@@ -31,9 +32,215 @@
 
 #include "DialogManagerWin.h"
 #include <shlobj.h>
-#include "precompiled_headers.h" // Anything before this is PCH on windows
-// #include "XFolderDialog.cpp"
-//#include "Win/XFolderDialog.h"
+
+#include <objbase.h>      // For COM headers
+#include "shobjidl.h"     // for IFileDialogEvents and IFileDialogControlEvents
+#include <shlwapi.h>
+#include <knownfolders.h> // for KnownFolder APIs/datatypes/function headers
+
+#include <strsafe.h>      // for StringCchPrintfW
+#include <shtypes.h>      // for COMDLG_FILTERSPEC
+
+//#include "precompiled_headers.h" // Anything before this is PCH on windows
+
+#pragma comment(linker, "\"/manifestdependency:type='Win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+
+const COMDLG_FILTERSPEC c_rgSaveTypes[] =
+{
+    {L"Word Document (*.doc)",       L"*.doc"},
+    {L"Web Page (*.htm; *.html)",    L"*.htm;*.html"},
+    {L"Text Document (*.txt)",       L"*.txt"},
+    {L"All Documents (*.*)",         L"*.*"},
+	{L"Files and Folders (*)",		 L"*.*"}
+};
+
+// Indices of file types
+#define INDEX_WORDDOC 1
+#define INDEX_WEBPAGE 2
+#define INDEX_TEXTDOC 3
+
+// Controls
+#define CONTROL_GROUP           2000
+#define CONTROL_LIST			 2
+#define CONTROL_RADIOBUTTON1    1
+#define CONTROL_RADIOBUTTON2    2       // It is OK for this to have the same ID as CONTROL_RADIOBUTTONLIST,
+                                        // because it is a child control under CONTROL_RADIOBUTTONLIST
+
+// IDs for the Task Diaog Buttons
+#define IDC_BASICFILEOPEN                       100
+#define IDC_ADDITEMSTOCUSTOMPLACES              101
+#define IDC_ADDCUSTOMCONTROLS                   102
+#define IDC_SETDEFAULTVALUESFORPROPERTIES       103
+#define IDC_WRITEPROPERTIESUSINGHANDLERS        104
+#define IDC_WRITEPROPERTIESWITHOUTUSINGHANDLERS 105
+
+/* File Dialog Event Handler *****************************************************************************************************/
+
+class CDialogEventHandler : public IFileDialogEvents,
+                            public IFileDialogControlEvents
+{
+public:
+    // IUnknown methods
+    IFACEMETHODIMP QueryInterface(REFIID riid, void** ppv)
+    {
+        static const QITAB qit[] = {
+            QITABENT(CDialogEventHandler, IFileDialogEvents),
+            QITABENT(CDialogEventHandler, IFileDialogControlEvents),
+            { 0 },
+        };
+        return QISearch(this, qit, riid, ppv);
+    }
+
+    IFACEMETHODIMP_(ULONG) AddRef()
+    {
+        return InterlockedIncrement(&_cRef);
+    }
+
+    IFACEMETHODIMP_(ULONG) Release()
+    {
+        long cRef = InterlockedDecrement(&_cRef);
+        if (!cRef)
+            delete this;
+        return cRef;
+    }
+
+    // IFileDialogEvents methods
+    IFACEMETHODIMP OnFileOk(IFileDialog *) { return S_OK; };
+    IFACEMETHODIMP OnFolderChange(IFileDialog *) { return S_OK; };
+    IFACEMETHODIMP OnFolderChanging(IFileDialog *, IShellItem *) { return S_OK; };
+    IFACEMETHODIMP OnHelp(IFileDialog *) { return S_OK; };
+   //IFACEMETHODIMP (IFileDialog *pfd){ return S_OK; };
+	IFACEMETHODIMP OnSelectionChange(IFileDialog *pfd){ return S_OK; }
+    IFACEMETHODIMP OnShareViolation(IFileDialog *, IShellItem *, FDE_SHAREVIOLATION_RESPONSE *) { return S_OK; };
+    IFACEMETHODIMP OnTypeChange(IFileDialog *pfd);
+    IFACEMETHODIMP OnOverwrite(IFileDialog *, IShellItem *, FDE_OVERWRITE_RESPONSE *) { return S_OK; };
+
+    // IFileDialogControlEvents methods
+    IFACEMETHODIMP OnItemSelected(IFileDialogCustomize *pfdc, DWORD dwIDCtl, DWORD dwIDItem);
+    IFACEMETHODIMP OnButtonClicked(IFileDialogCustomize *, DWORD) { return S_OK; };
+    IFACEMETHODIMP OnCheckButtonToggled(IFileDialogCustomize *, DWORD, BOOL) { return S_OK; };
+    IFACEMETHODIMP OnControlActivating(IFileDialogCustomize *, DWORD) { return S_OK; };
+
+    CDialogEventHandler() : _cRef(1) { };
+private:
+    ~CDialogEventHandler() { };
+    long _cRef;
+};
+
+
+
+// Instance creation helper
+HRESULT CDialogEventHandler_CreateInstance(REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+    CDialogEventHandler *pDialogEventHandler = new (std::nothrow) CDialogEventHandler();
+    HRESULT hr = pDialogEventHandler ? S_OK : E_OUTOFMEMORY;
+    if (SUCCEEDED(hr))
+    {
+        hr = pDialogEventHandler->QueryInterface(riid, ppv);
+        pDialogEventHandler->Release();
+    }
+    return hr;
+}
+
+
+// IFileDialogEvents methods
+// This method gets called when the file-type is changed (combo-box selection changes).
+// For sample sake, let's react to this event by changing the properties show.
+HRESULT CDialogEventHandler::OnTypeChange(IFileDialog *pfd)
+{
+    IFileSaveDialog *pfsd;
+    HRESULT hr = pfd->QueryInterface(&pfsd);
+    if (SUCCEEDED(hr))
+    {
+        UINT uIndex;
+        hr = pfsd->GetFileTypeIndex(&uIndex);   // index of current file-type
+        if (SUCCEEDED(hr))
+        {
+            IPropertyDescriptionList *pdl = NULL;
+
+            switch (uIndex)
+            {
+            case INDEX_WORDDOC:
+                // When .doc is selected, let's ask for some arbitrary property, say Title.
+                //hr = PSGetPropertyDescriptionListFromString(L"prop:System.Title", IID_PPV_ARGS(&pdl));
+                hr = 1;
+				if (SUCCEEDED(hr))
+                {
+                    // FALSE as second param == do not show default properties.
+                    hr = pfsd->SetCollectedProperties(pdl, FALSE);
+                    pdl->Release();
+                }
+                break;
+
+            case INDEX_WEBPAGE:
+                // When .html is selected, let's ask for some other arbitrary property, say Keywords.
+               // hr = PSGetPropertyDescriptionListFromString(L"prop:System.Keywords", IID_PPV_ARGS(&pdl));
+				hr = 1;
+                if (SUCCEEDED(hr))
+                {
+                    // FALSE as second param == do not show default properties.
+                    hr = pfsd->SetCollectedProperties(pdl, FALSE);
+                    pdl->Release();
+                }
+                break;
+
+            case INDEX_TEXTDOC:
+                // When .txt is selected, let's ask for some other arbitrary property, say Author.
+              //  hr = PSGetPropertyDescriptionListFromString(L"prop:System.Author", IID_PPV_ARGS(&pdl));
+                hr =1;
+				if (SUCCEEDED(hr))
+                {
+                    // TRUE as second param == show default properties as well, but show Author property first in list.
+                    hr = pfsd->SetCollectedProperties(pdl, TRUE);
+                    pdl->Release();
+                }
+                break;
+            }
+        }
+        pfsd->Release();
+    }
+    return hr;
+}
+HRESULT CDialogEventHandler::OnItemSelected(IFileDialogCustomize *pfdc, DWORD dwIDCtl, DWORD dwIDItem)
+{
+	HRESULT hr;   
+	IFileDialog * pfd;
+	pfdc->QueryInterface(&pfd);
+	hr = pfd->SetTitle(L"Meh");
+	IShellItem * folderItem;
+	LPWSTR pszFolder =L"";
+
+	pfd->GetFolder(&folderItem);
+	folderItem->GetDisplayName(SIGDN_FILESYSPATH, &pszFolder);
+	pfd->SetFileNameLabel(pszFolder + _T('::'));
+	return hr;
+}
+	//if (SUCCEEDED(hr))
+ //   {
+	//	
+
+ //       if (dwIDCtl == CONTROL_RADIOBUTTONLIST)
+ //       {
+ //           switch (dwIDItem)
+ //           {
+ //           case CONTROL_RADIOBUTTON1:
+ //               hr = pfd->SetTitle(L"Longhorn Dialog");
+ //               break;
+
+ //           case CONTROL_RADIOBUTTON2:
+ //               hr = pfd->SetTitle(L"Vista Dialog");
+ //               break;
+ //           }
+ //       }
+ //       pfd->Release();
+ //   }
+ //   return hr;
+
+// IFileDialogControlEvents
+// This method gets called when an dialog control item selection happens (radio-button selection. etc).
+// For sample sake, let's react to this event by changing the dialog title.
+
 
 DialogManager* DialogManager::get()
 {
@@ -48,7 +255,7 @@ void DialogManagerWin::OpenFileDialog(const FB::BrowserHostPtr& host, FB::Plugin
 
     HWND browserWindow = wndWin ? wndWin->getBrowserHWND() : wndlessWin->getHWND();
     //HWND browserWindow =  wndWin->getBrowserHWND();
-	boost::thread dlgThread(&DialogManagerWin::_showFileDialog, this, browserWindow, "*.*", "Select Files", cb, multiple);
+	boost::thread dlgThread(&DialogManagerWin::_showFileDialog, this, browserWindow, "*.*", "Select Files", cb, multiple, fileOperation);
 	
 }
 
@@ -58,14 +265,14 @@ void DialogManagerWin::OpenFolderDialog(const FB::BrowserHostPtr& host, FB::Plug
 
     HWND browserWindow = wndWin ? wndWin->getBrowserHWND() : wndlessWin->getHWND();
     //HWND browserWindow =  wndWin->getBrowserHWND();
-	boost::thread dlgThread(&DialogManagerWin::_showFolderDialog2, this, browserWindow, "*.*", fileType, cb, multiple);
+	boost::thread dlgThread(&DialogManagerWin::_showFolderDialog2, this, browserWindow, "*.*", fileType, cb, multiple, fileOperation);
 	
 }
 
 
 void DialogManagerWin::_showFolderDialog(HWND wnd, const PathCallback& cb) {
     BROWSEINFO bi = { 0 };
-    bi.lpszTitle = _T("Select a folder to import");
+    bi.lpszTitle = _T("Select a folder");
     bi.hwndOwner = wnd;
     LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
 //	LPITEMIDLIST pidl = 0;
@@ -92,7 +299,7 @@ void DialogManagerWin::_showFolderDialog(HWND wnd, const PathCallback& cb) {
         cb("");
     }
 }
-void DialogManagerWin::_showFileDialog(HWND wnd, const std::string& path, const std::string& filter, const PathCallback& cb, bool multiple)
+void DialogManagerWin::_showFileDialog(HWND wnd, const std::string& path, const std::string& filter, const PathCallback& cb, bool multiple, const int fileOperation)
 {
     wchar_t Filestring[500*MAX_PATH];
 	memset(&Filestring, 0, sizeof(Filestring));
@@ -124,103 +331,23 @@ void DialogManagerWin::_showFileDialog(HWND wnd, const std::string& path, const 
 	opf.lpstrFilter = L"All\0*.*\0Text\0*.TXT\0";
     opf.lStructSize = sizeof(OPENFILENAME);
 	
-	if ( multiple ) {
-		opf.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_ALLOWMULTISELECT | OFN_EXPLORER;
+	if ( multiple && fileOperation != 3 ) {
+		opf.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_ALLOWMULTISELECT | OFN_EXPLORER | OFN_NOVALIDATE;
 	} else {
-	    opf.Flags = (OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT) & ~OFN_ALLOWMULTISELECT;
+	    opf.Flags = (OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT| OFN_NOVALIDATE) & ~OFN_ALLOWMULTISELECT;
+	}
+	if (fileOperation == 2) {
+		bool result = GetSaveFileName(&opf);
+		if (!result) {
+			out = "Failed.";
+			cb(out);
+			return;
+		}
 	}
 
-    if(GetOpenFileName(&opf))
-    {
-		bool bMultipleFileSelected = (opf.lpstrFile[opf.nFileOffset - 1] == '\0');
-
-		if (bMultipleFileSelected)
-		{
-			bool bDirectoryIsRoot = (opf.lpstrFile[wcslen(opf.lpstrFile) - 1] == '\\');
-	      
-			for (wchar_t *szTemp = opf.lpstrFile + opf.nFileOffset; *szTemp;	szTemp += (wcslen(szTemp) + 1))
-			{
-				size_t dwLen = wcslen(opf.lpstrFile) + wcslen(szTemp) + 2;
-				wchar_t * szFile = new wchar_t[dwLen];
-				wcscpy_s(szFile, dwLen, opf.lpstrFile);
-				if (!bDirectoryIsRoot)
-				{
-					wcscat_s(szFile, dwLen, L"\\"); 
-				}
-				wcscat_s(szFile, dwLen, szTemp);   
-				out += FB::wstring_to_utf8(std::wstring(szFile));
-				out += ":";
-				delete szFile;
-			}
-		} else {
-			out = FB::wstring_to_utf8(std::wstring(Filestring));
-		} 
-    }
-
-    cb(out);
-}
-void DialogManagerWin::_showFolderDialog2(HWND wnd, const std::string& path, const int fileType, const PathCallback& cb, const bool multiple)
-{
-    wchar_t Filestring[MAX_PATH * 512];
-	memset(&Filestring, 0, sizeof(Filestring));
-
-	memset(&m_strPath, 0, sizeof(m_strPathList));
-	memset(&m_strPathList, 0, sizeof(m_strPathList));
-	m_folderChange = false;
-
-	std::string out;
-
-    //std::wstring wFilter(FB::utf8_to_wstring(filter));
-    //std::wstring wPath(FB::utf8_to_wstring(filter));
- 
-	OPENFILENAME opf;
-	opf.lStructSize = sizeof(OPENFILENAME);
-    
-	//memset(&opf, 0, sizeof(OPENFILENAME));
-
-	//opf.lStructSize =  OPENFILENAME_SIZE_VERSION_400W; 
-	//opf.lpTemplateName = NULL;
-	opf.hwndOwner = wnd;
-
-	if (fileType == 2) {
-		opf.lpstrFilter = L"Folders Only\0___.__\0";
-		opf.lpstrTitle = L"Select folders...";
-	} else {
-		opf.lpstrFilter = L"All Files\0*.*\0\0";
-		opf.lpstrTitle = L"Select folders and files...";
-	}			
-    
-	opf.lpstrCustomFilter = 0;
-    opf.nMaxCustFilter = 0L;
-    opf.nFilterIndex = 1L;
-	
-	opf.lpstrFile = Filestring;
-	opf.lpstrFile[0] = '\0';
-	opf.lpstrFileTitle = NULL;
-	memset(&opf.lpstrFileTitle, 0, sizeof(opf.lpstrFileTitle));
-    opf.nMaxFile = MAX_PATH * 512;
-    opf.nMaxFileTitle= MAX_PATH * 512;
-    opf.lpstrInitialDir = L"\0";
-    
-    opf.nFileOffset = 0;
-    opf.nFileExtension = 0;
-    opf.lpstrDefExt = L"*.*";
-    opf.lCustData = NULL;
-	opf.lpfnHook = FolderHook;	
-    
-	opf.FlagsEx |= ~OFN_EX_NOPLACESBAR;
-	
-	if ( multiple ) {
-		opf.Flags =  OFN_ENABLESIZING | OFN_ALLOWMULTISELECT | OFN_EXPLORER | OFN_NOVALIDATE | OFN_ENABLEHOOK | OFN_HIDEREADONLY;
-		
-	} else {
-	    opf.Flags =  OFN_ENABLESIZING | OFN_NOVALIDATE | OFN_EXPLORER | OFN_ENABLEHOOK | OFN_HIDEREADONLY;
-
-	}
- 
 	if(GetOpenFileName(&opf))
     {
-		bool bMultipleFileSelected = multiple;
+		bool bMultipleFileSelected = (opf.lpstrFile[opf.nFileOffset - 1] == '\0');
 
 		if (bMultipleFileSelected)
 		{
@@ -240,11 +367,218 @@ void DialogManagerWin::_showFolderDialog2(HWND wnd, const std::string& path, con
 				out += "::";
 				delete szFile;
 			}
-	} else { 
-		out = FB::wstring_to_utf8(std::wstring(Filestring));
+		} else {
+			out = FB::wstring_to_utf8(std::wstring(Filestring));
 		} 
-	}
+    }
+
     cb(out);
+}
+void DialogManagerWin::_showFolderDialog2(HWND wnd, const std::string& path, const int fileType, const PathCallback& cb, const bool multiple, const int fileOperation)
+{
+	wchar_t Filestring[MAX_PATH * 512];
+	memset(&Filestring, 0, sizeof(Filestring));
+
+	//memset(&m_strPath, 0, sizeof(m_strPathList));
+	//
+	std::string out;
+
+ //   //std::wstring wFilter(FB::utf8_to_wstring(filter));
+ //   //std::wstring wPath(FB::utf8_to_wstring(filter));
+ //
+	//OPENFILENAMEW opf;
+
+	//opf.lStructSize = sizeof(OPENFILENAMEW);
+ //   
+	////memset(&opf, 0, sizeof(OPENFILENAME));
+
+	////opf.lStructSize =  OPENFILENAME_SIZE_VERSION_400W; 
+	////opf.lpTemplateName = NULL;
+	//opf.hwndOwner = wnd;
+
+	//if (fileType == 2) {
+	//	opf.lpstrFilter = L"Folders Only\0___.__\0";
+	//	opf.lpstrTitle = L"Select folders...";
+	//} else {
+	//	opf.lpstrFilter = L"All Files\0*.*\0\0";
+	//	opf.lpstrTitle = L"Select folders and files...";
+	//}			
+ //   
+	//opf.lpstrCustomFilter = 0;
+ //   opf.nMaxCustFilter = 0L;
+ //   opf.nFilterIndex = 1L;
+	//
+	//opf.lpstrFile = Filestring;
+	//opf.lpstrFile[0] = '\0';
+	//opf.lpstrFileTitle = L"";
+	//memset(&opf.lpstrFileTitle, 0, sizeof(opf.lpstrFileTitle));
+ //   opf.nMaxFile = MAX_PATH * 512;
+ //   opf.nMaxFileTitle= MAX_PATH * 512;
+ //   opf.lpstrInitialDir = L"%USERPROFILE%";
+ //   
+ //   opf.nFileOffset = 0;
+ //   opf.nFileExtension = 0;
+ //   opf.lpstrDefExt = L"*.*";
+ //   opf.lCustData = NULL;
+	//opf.lpfnHook = FolderHook;	
+ //   
+	//opf.FlagsEx = ~OFN_EX_NOPLACESBAR;
+	//
+	//if ( multiple ) {
+	//	opf.Flags =  OFN_ENABLESIZING | OFN_ALLOWMULTISELECT | OFN_EXPLORER | OFN_NOVALIDATE | OFN_ENABLEHOOK | OFN_HIDEREADONLY;
+	//	
+	//} else {
+	//    opf.Flags =  OFN_ENABLESIZING | OFN_NOVALIDATE | OFN_EXPLORER | OFN_ENABLEHOOK | OFN_HIDEREADONLY;
+
+	//}
+
+	LPCTSTR lpszDefExt = NULL;
+	DWORD dwFlags =  (FOS_FORCEFILESYSTEM | FOS_NOVALIDATE) & ~FOS_STRICTFILETYPES;
+
+	BROWSEINFO bi;
+	bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_VALIDATE | BIF_STATUSTEXT;
+
+	LPWSTR pszFilePath = NULL;
+	std::wstring lpszFileName; 
+	lpszFileName = Filestring;
+	IFileOpenDialog * ptr = NULL;
+	HRESULT hr = NULL;
+	if (fileOperation == 2) {
+		IFileSaveDialog * ptr = NULL;
+		HRESULT foobar = CoInitialize(ptr);
+		HRESULT hr = CoCreateInstance(CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&ptr));
+		
+	} else {
+		HRESULT foobar = CoInitialize(ptr);
+		HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&ptr));
+		
+	}
+	if (SUCCEEDED(hr))
+        {	 // Create an event handling object, and hook it up to the dialog.
+			IFileDialogEvents *pfde = NULL;
+			hr = CDialogEventHandler_CreateInstance(IID_PPV_ARGS(&pfde));
+			// Set up a Customization.
+			IFileDialogCustomize *pfdc = NULL;
+			hr = ptr->QueryInterface(IID_PPV_ARGS(&pfdc));
+			// Create a Visual Group.
+			hr = pfdc->StartVisualGroup(CONTROL_GROUP, L"Sample Group");
+			//hr = pfdc->AddControlItem(CONTROL_LIST, lst1, L"Customize");
+           // hr = pfdc->SetControlState(CONTROL_LIST, CDCS_VISIBLE | CDCS_ENABLED);
+
+		if (SUCCEEDED(hr)) 
+			{
+			// Hook up the event handler.
+			DWORD dwCookie;
+			hr = ptr->Advise(pfde, &dwCookie);
+		
+            if (SUCCEEDED(hr))
+            {
+                // Set the options on the dialog.
+               
+                // Before setting, always get the options first in order not to override existing options.
+                hr = ptr->GetOptions(&dwFlags);
+                if (SUCCEEDED(hr))
+                {
+                    // In this case, get shell items only for file system items.
+					if ( multiple ) {
+						  hr = ptr->SetOptions(dwFlags | FOS_ALLOWMULTISELECT);
+					}
+					if (fileType == 2) {
+						  hr = ptr->GetOptions(&dwFlags);					 
+						  hr = ptr->SetOptions(dwFlags | FOS_PICKFOLDERS);
+					}
+                    // hr = ptr->SetOptions(dwFlags);
+					// hr = ptr->SetOptions(dwFlags | FOS_FORCEFILESYSTEM | FOS_NOVALIDATE | FOS_ALLOWMULTISELECT);
+                    if (SUCCEEDED(hr))
+                    {
+                     // Set the file types to display only. Notice that, this is a 1-based array.
+						//hr = ptr->SetFileTypes(ARRAYSIZE(c_rgSaveTypes), c_rgSaveTypes);
+						if (SUCCEEDED(hr))
+                        {
+                     
+                          //  hr = ptr->SetFileTypeIndex(4);
+                            if (SUCCEEDED(hr))
+                            {
+                                // Set the default extension to be ".doc" file.
+                                //hr = ptr->SetDefaultExtension(L"");
+                                if (SUCCEEDED(hr))
+                                {
+                                    // Show the dialog
+									
+									
+                                    hr = ptr->Show(wnd);
+                                    if (SUCCEEDED(hr))
+                                    {
+                                       
+										IShellItemArray *psiResults;
+										ptr->GetResults(&psiResults);
+
+										IEnumShellItems *ppenum;
+										psiResults->EnumItems(&ppenum);
+										
+										IShellItem * psiItem;
+
+										hr = ppenum->Next(1, &psiItem,0);
+										while (hr == S_OK) {
+											
+											//psiResults->GetItemAt(i, &psiItem);
+											//psiItem->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
+											psiItem->GetDisplayName(SIGDN_DESKTOPABSOLUTEPARSING, &pszFilePath);
+											lpszFileName += pszFilePath;
+											lpszFileName += L"::";
+											hr = ppenum->Next(1, &psiItem,0);
+										}
+
+
+                                        if (SUCCEEDED(hr))
+                                        {
+											out = FB::wstring_to_utf8(lpszFileName );
+											cb(out);
+                                            psiResults->Release();
+                                        }
+									}
+                                }
+                            }
+                        }
+                    }
+                }
+                // Unhook the event handler.
+               ptr->Unadvise(dwCookie);
+			}
+			pfde->Release();
+		} 
+        ptr->Release();
+	}
+	//out = FB::wstring_to_utf8(std::wstring(pszFilePath));
+    
+								
+	//if(true == false)
+ //   {
+	//	bool bMultipleFileSelected = multiple;
+
+	//	if (bMultipleFileSelected)
+	//	{
+	//		bool bDirectoryIsRoot = (opf.lpstrFile[wcslen(opf.lpstrFile) - 1] == '\\');
+	//      
+	//		for (wchar_t *szTemp = opf.lpstrFile + opf.nFileOffset; *szTemp;	szTemp += (wcslen(szTemp) + 1))
+	//		{
+	//			size_t dwLen = wcslen(opf.lpstrFile) + wcslen(szTemp) + 2;
+	//			wchar_t * szFile = new wchar_t[dwLen];
+	//			wcscpy_s(szFile, dwLen, opf.lpstrFile);
+	//			if (!bDirectoryIsRoot)
+	//			{
+	//				wcscat_s(szFile, dwLen, L"\\"); 
+	//			}
+	//			wcscat_s(szFile, dwLen, szTemp);   
+	//			out += FB::wstring_to_utf8(std::wstring(szFile));
+	//			out += "::";
+	//			delete szFile;
+	//		}
+	//} else { 
+	//	out = FB::wstring_to_utf8(std::wstring(Filestring));
+	//	} 
+	//}
+	
 }
 /*
 UINT CALLBACK OFNHookProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -320,10 +654,14 @@ UINT CALLBACK FolderHook (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			if (pNmhdr->code == CDN_SELCHANGE)
 			{
+				memset(&m_strPathList, 0, sizeof(m_strPathList));
+				m_strPathList = L"";
 				LVITEM m_listItem = {0}; 
+
 				m_listItem.iItem = 0;
 				m_listItem.iSubItem = 0;
-				m_listItem.mask = LVIF_TEXT;
+				m_listItem.mask = LVIF_TEXT|LVIF_STATE;
+				m_listItem.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
 				const int m_max = MAX_PATH * 512 - 1;
 				m_listItem.cchTextMax = MAX_PATH * 512;
 									
@@ -331,7 +669,7 @@ UINT CALLBACK FolderHook (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				
 				int i;
 
-				nSelItems = ListView_GetSelectedCount(m_sysView);
+				nSelItems = ListView_GetItemCount(m_sysView);
 				for (i = 0; i < nSelItems; i++) {
 					m_listItem.iItem = i;
 		
@@ -339,15 +677,20 @@ UINT CALLBACK FolderHook (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 					m_listItem.pszText = LPWSTR(tempsz);
 
 					ListView_GetItem(m_sysView, &m_listItem);
-					m_strPathList += m_listItem.pszText;
-				
-					if (lpofn->lpOFN->Flags & OFN_ALLOWMULTISELECT)  {
-						m_strPathList +=( _T("::"));
+					//ListView_GetItemState(m_sysView, &m_listItem,LVIS_SELECTED);
+					if (m_listItem.state & LVIS_SELECTED) {
+						m_strPathList += m_listItem.pszText;
+
+						if (lpofn->lpOFN->Flags & OFN_ALLOWMULTISELECT)
+						{
+							m_strPathList +=( _T("::"));
+						}
+						
 					}
 				}
-				
 				CommDlg_OpenSave_SetControlText(pNmhdr->hwndFrom, edt1, m_strPathList.c_str());
-				m_strPathList.clear();
+			
+				
 			}
 
 	
@@ -357,7 +700,10 @@ UINT CALLBACK FolderHook (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				//memset(&m_strPathList, 0, sizeof(m_strPathList));
 				m_strPath = GetPath(hwnd, CDM_GETFILEPATH);
 				m_curDir = m_strPath;
-				//CommDlg_OpenSave_SetControlText(pNmhdr->hwndFrom, edt1, m_strPathList.c_str());
+			
+				memset(&m_strPathList, 0, sizeof(m_strPathList));
+
+				CommDlg_OpenSave_SetControlText(pNmhdr->hwndFrom, edt1, m_strPathList.c_str());
 		
 			}
 			return FALSE;

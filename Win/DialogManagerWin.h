@@ -47,11 +47,20 @@ protected:
     DialogManagerWin() {};
     ~DialogManagerWin() {};
 	
-    void _showFileDialog(HWND wnd, const std::string& path, const std::string& filter, const PathCallback& cb, const bool multiple);
+    void _showFileDialog(HWND wnd, const std::string& path, const std::string& filter, const PathCallback& cb, const bool multiple, const int fileOperation);
     void _showFolderDialog(HWND wnd, const PathCallback& cb);
-	void _showFolderDialog2(HWND wnd, const std::string& path, const int fileType, const PathCallback& cb, const bool multiple );
+	void _showFolderDialog2(HWND wnd, const std::string& path, const int fileType, const PathCallback& cb, const bool multiple, const int fileOperation);
 	
     friend class DialogManager;
 
 };
+
+//class CDialogEventHandler : public IFileDialogEvents,
+//                            public IFileDialogControlEvents	{
+//public:
+//    // IUnknown methods
+//    IFACEMETHODIMP QueryInterface(REFIID riid, void** ppv);
+//
+//};
+//
 #endif // DialogManagerWin_h__
