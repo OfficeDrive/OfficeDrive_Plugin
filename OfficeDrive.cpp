@@ -74,9 +74,6 @@ void OfficeDrive::onPluginReady()
 	//OfficeDriveAPIPtr api;
 	//OfficeDrivePtr plugin = api->getPlugin();
 	//api->startDaemon();
-	
-	
- 
 }
 
 void OfficeDrive::shutdown()

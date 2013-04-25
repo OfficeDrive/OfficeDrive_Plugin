@@ -19,8 +19,10 @@
 */
 
 #include "atlbase.h"
+
 //#include "win_common.h"
 //#include <commdlg.h>
+
 #include "atlapp.h"
 #include "atldlgs.h"
 #include <string>
@@ -34,7 +36,7 @@
 #include <shlobj.h>
 
 #include <objbase.h>      // For COM headers
-#include "shobjidl.h"     // for IFileDialogEvents and IFileDialogControlEvents
+#include <shobjidl.h>     // for IFileDialogEvents and IFileDialogControlEvents
 #include <shlwapi.h>
 #include <knownfolders.h> // for KnownFolder APIs/datatypes/function headers
 
@@ -63,8 +65,7 @@ const COMDLG_FILTERSPEC c_rgSaveTypes[] =
 #define CONTROL_GROUP           2000
 #define CONTROL_LIST			 2
 #define CONTROL_RADIOBUTTON1    1
-#define CONTROL_RADIOBUTTON2    2       // It is OK for this to have the same ID as CONTROL_RADIOBUTTONLIST,
-                                        // because it is a child control under CONTROL_RADIOBUTTONLIST
+#define CONTROL_RADIOBUTTON2    2       
 
 // IDs for the Task Diaog Buttons
 #define IDC_BASICFILEOPEN                       100
@@ -109,14 +110,40 @@ public:
     IFACEMETHODIMP OnFolderChange(IFileDialog *) { return S_OK; };
     IFACEMETHODIMP OnFolderChanging(IFileDialog *, IShellItem *) { return S_OK; };
     IFACEMETHODIMP OnHelp(IFileDialog *) { return S_OK; };
-   //IFACEMETHODIMP (IFileDialog *pfd){ return S_OK; };
-	IFACEMETHODIMP OnSelectionChange(IFileDialog *pfd){ return S_OK; }
+    
+	IFACEMETHODIMP OnSelectionChange(IFileDialog *pfd)
+    {
+        IShellItem *psi;
+        HRESULT hr = pfd->GetCurrentSelection(&psi);
+        if (SUCCEEDED(hr))
+        {
+            SFGAOF attr;
+            hr = psi->GetAttributes(SFGAO_FOLDER, &attr);
+            if (SUCCEEDED(hr) && (SFGAO_FOLDER == attr))
+            {
+				LPWSTR folderName = NULL;
+				psi->GetDisplayName(SIGDN_FILESYSPATH, &folderName);
+				//pfd->SetFileName(folderName);
+				
+				//m_strPathList += folderName;
+
+				//m_strPathList += L"::";
+            }
+            else
+            {
+            }
+            psi->Release();
+        }
+        return S_OK;
+    }
+
+	//IFACEMETHODIMP OnSelectionChange(IFileDialog *pfd){ return S_OK; }
     IFACEMETHODIMP OnShareViolation(IFileDialog *, IShellItem *, FDE_SHAREVIOLATION_RESPONSE *) { return S_OK; };
     IFACEMETHODIMP OnTypeChange(IFileDialog *pfd);
     IFACEMETHODIMP OnOverwrite(IFileDialog *, IShellItem *, FDE_OVERWRITE_RESPONSE *) { return S_OK; };
 
     // IFileDialogControlEvents methods
-    IFACEMETHODIMP OnItemSelected(IFileDialogCustomize *pfdc, DWORD dwIDCtl, DWORD dwIDItem);
+	IFACEMETHODIMP OnItemSelected(IFileDialogCustomize *pfdc, DWORD dwIDCtl, DWORD dwIDItem) { return S_OK;};
     IFACEMETHODIMP OnButtonClicked(IFileDialogCustomize *, DWORD) { return S_OK; };
     IFACEMETHODIMP OnCheckButtonToggled(IFileDialogCustomize *, DWORD, BOOL) { return S_OK; };
     IFACEMETHODIMP OnControlActivating(IFileDialogCustomize *, DWORD) { return S_OK; };
@@ -127,9 +154,6 @@ private:
     long _cRef;
 };
 
-
-
-// Instance creation helper
 HRESULT CDialogEventHandler_CreateInstance(REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -143,10 +167,6 @@ HRESULT CDialogEventHandler_CreateInstance(REFIID riid, void **ppv)
     return hr;
 }
 
-
-// IFileDialogEvents methods
-// This method gets called when the file-type is changed (combo-box selection changes).
-// For sample sake, let's react to this event by changing the properties show.
 HRESULT CDialogEventHandler::OnTypeChange(IFileDialog *pfd)
 {
     IFileSaveDialog *pfsd;
@@ -162,8 +182,6 @@ HRESULT CDialogEventHandler::OnTypeChange(IFileDialog *pfd)
             switch (uIndex)
             {
             case INDEX_WORDDOC:
-                // When .doc is selected, let's ask for some arbitrary property, say Title.
-                //hr = PSGetPropertyDescriptionListFromString(L"prop:System.Title", IID_PPV_ARGS(&pdl));
                 hr = 1;
 				if (SUCCEEDED(hr))
                 {
@@ -174,8 +192,6 @@ HRESULT CDialogEventHandler::OnTypeChange(IFileDialog *pfd)
                 break;
 
             case INDEX_WEBPAGE:
-                // When .html is selected, let's ask for some other arbitrary property, say Keywords.
-               // hr = PSGetPropertyDescriptionListFromString(L"prop:System.Keywords", IID_PPV_ARGS(&pdl));
 				hr = 1;
                 if (SUCCEEDED(hr))
                 {
@@ -202,44 +218,6 @@ HRESULT CDialogEventHandler::OnTypeChange(IFileDialog *pfd)
     }
     return hr;
 }
-HRESULT CDialogEventHandler::OnItemSelected(IFileDialogCustomize *pfdc, DWORD dwIDCtl, DWORD dwIDItem)
-{
-	HRESULT hr;   
-	IFileDialog * pfd;
-	pfdc->QueryInterface(&pfd);
-	hr = pfd->SetTitle(L"Meh");
-	IShellItem * folderItem;
-	LPWSTR pszFolder =L"";
-
-	pfd->GetFolder(&folderItem);
-	folderItem->GetDisplayName(SIGDN_FILESYSPATH, &pszFolder);
-	pfd->SetFileNameLabel(pszFolder + _T('::'));
-	return hr;
-}
-	//if (SUCCEEDED(hr))
- //   {
-	//	
-
- //       if (dwIDCtl == CONTROL_RADIOBUTTONLIST)
- //       {
- //           switch (dwIDItem)
- //           {
- //           case CONTROL_RADIOBUTTON1:
- //               hr = pfd->SetTitle(L"Longhorn Dialog");
- //               break;
-
- //           case CONTROL_RADIOBUTTON2:
- //               hr = pfd->SetTitle(L"Vista Dialog");
- //               break;
- //           }
- //       }
- //       pfd->Release();
- //   }
- //   return hr;
-
-// IFileDialogControlEvents
-// This method gets called when an dialog control item selection happens (radio-button selection. etc).
-// For sample sake, let's react to this event by changing the dialog title.
 
 
 DialogManager* DialogManager::get()
@@ -299,6 +277,7 @@ void DialogManagerWin::_showFolderDialog(HWND wnd, const PathCallback& cb) {
         cb("");
     }
 }
+
 void DialogManagerWin::_showFileDialog(HWND wnd, const std::string& path, const std::string& filter, const PathCallback& cb, bool multiple, const int fileOperation)
 {
     wchar_t Filestring[500*MAX_PATH];
@@ -337,8 +316,8 @@ void DialogManagerWin::_showFileDialog(HWND wnd, const std::string& path, const 
 	    opf.Flags = (OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT| OFN_NOVALIDATE) & ~OFN_ALLOWMULTISELECT;
 	}
 	if (fileOperation == 2) {
-		bool result = GetSaveFileName(&opf);
-		if (!result) {
+		BOOL result = GetSaveFileName(&opf);
+		if (!result ) {
 			out = "Failed.";
 			cb(out);
 			return;
@@ -377,72 +356,21 @@ void DialogManagerWin::_showFileDialog(HWND wnd, const std::string& path, const 
 void DialogManagerWin::_showFolderDialog2(HWND wnd, const std::string& path, const int fileType, const PathCallback& cb, const bool multiple, const int fileOperation)
 {
 	wchar_t Filestring[MAX_PATH * 512];
+	
 	memset(&Filestring, 0, sizeof(Filestring));
-
-	//memset(&m_strPath, 0, sizeof(m_strPathList));
-	//
+	memset(&m_strPathList, 0, sizeof(m_strPathList));
+	m_strPathList = L"";
 	std::string out;
 
- //   //std::wstring wFilter(FB::utf8_to_wstring(filter));
- //   //std::wstring wPath(FB::utf8_to_wstring(filter));
- //
-	//OPENFILENAMEW opf;
-
-	//opf.lStructSize = sizeof(OPENFILENAMEW);
- //   
-	////memset(&opf, 0, sizeof(OPENFILENAME));
-
-	////opf.lStructSize =  OPENFILENAME_SIZE_VERSION_400W; 
-	////opf.lpTemplateName = NULL;
-	//opf.hwndOwner = wnd;
-
-	//if (fileType == 2) {
-	//	opf.lpstrFilter = L"Folders Only\0___.__\0";
-	//	opf.lpstrTitle = L"Select folders...";
-	//} else {
-	//	opf.lpstrFilter = L"All Files\0*.*\0\0";
-	//	opf.lpstrTitle = L"Select folders and files...";
-	//}			
- //   
-	//opf.lpstrCustomFilter = 0;
- //   opf.nMaxCustFilter = 0L;
- //   opf.nFilterIndex = 1L;
-	//
-	//opf.lpstrFile = Filestring;
-	//opf.lpstrFile[0] = '\0';
-	//opf.lpstrFileTitle = L"";
-	//memset(&opf.lpstrFileTitle, 0, sizeof(opf.lpstrFileTitle));
- //   opf.nMaxFile = MAX_PATH * 512;
- //   opf.nMaxFileTitle= MAX_PATH * 512;
- //   opf.lpstrInitialDir = L"%USERPROFILE%";
- //   
- //   opf.nFileOffset = 0;
- //   opf.nFileExtension = 0;
- //   opf.lpstrDefExt = L"*.*";
- //   opf.lCustData = NULL;
-	//opf.lpfnHook = FolderHook;	
- //   
-	//opf.FlagsEx = ~OFN_EX_NOPLACESBAR;
-	//
-	//if ( multiple ) {
-	//	opf.Flags =  OFN_ENABLESIZING | OFN_ALLOWMULTISELECT | OFN_EXPLORER | OFN_NOVALIDATE | OFN_ENABLEHOOK | OFN_HIDEREADONLY;
-	//	
-	//} else {
-	//    opf.Flags =  OFN_ENABLESIZING | OFN_NOVALIDATE | OFN_EXPLORER | OFN_ENABLEHOOK | OFN_HIDEREADONLY;
-
-	//}
-
 	LPCTSTR lpszDefExt = NULL;
-	DWORD dwFlags =  (FOS_FORCEFILESYSTEM | FOS_NOVALIDATE) & ~FOS_STRICTFILETYPES;
-
-	BROWSEINFO bi;
-	bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_VALIDATE | BIF_STATUSTEXT;
-
+	DWORD dwFlags =  (FOS_FORCEFILESYSTEM | FOS_NOVALIDATE) &~(FOS_STRICTFILETYPES | FOS_PATHMUSTEXIST | FOS_FILEMUSTEXIST);
 	LPWSTR pszFilePath = NULL;
+	
 	std::wstring lpszFileName; 
 	lpszFileName = Filestring;
 	IFileOpenDialog * ptr = NULL;
 	HRESULT hr = NULL;
+	
 	if (fileOperation == 2) {
 		IFileSaveDialog * ptr = NULL;
 		HRESULT foobar = CoInitialize(ptr);
@@ -461,7 +389,7 @@ void DialogManagerWin::_showFolderDialog2(HWND wnd, const std::string& path, con
 			IFileDialogCustomize *pfdc = NULL;
 			hr = ptr->QueryInterface(IID_PPV_ARGS(&pfdc));
 			// Create a Visual Group.
-			hr = pfdc->StartVisualGroup(CONTROL_GROUP, L"Sample Group");
+			hr = pfdc->StartVisualGroup(CONTROL_GROUP, L"OfficeDrive");
 			//hr = pfdc->AddControlItem(CONTROL_LIST, lst1, L"Customize");
            // hr = pfdc->SetControlState(CONTROL_LIST, CDCS_VISIBLE | CDCS_ENABLED);
 
@@ -520,7 +448,6 @@ void DialogManagerWin::_showFolderDialog2(HWND wnd, const std::string& path, con
 
 										hr = ppenum->Next(1, &psiItem,0);
 										while (hr == S_OK) {
-											
 											//psiResults->GetItemAt(i, &psiItem);
 											//psiItem->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
 											psiItem->GetDisplayName(SIGDN_DESKTOPABSOLUTEPARSING, &pszFilePath);
@@ -531,8 +458,13 @@ void DialogManagerWin::_showFolderDialog2(HWND wnd, const std::string& path, con
 
 
                                         if (SUCCEEDED(hr))
-                                        {
-											out = FB::wstring_to_utf8(lpszFileName );
+                                        {	
+											if (fileType == 3 && multiple){
+												out = FB::wstring_to_utf8(std::wstring(m_strPathList));
+												out += FB::wstring_to_utf8(lpszFileName);
+											} else {
+												out = FB::wstring_to_utf8(lpszFileName);
+											}
 											cb(out);
                                             psiResults->Release();
                                         }
@@ -552,7 +484,7 @@ void DialogManagerWin::_showFolderDialog2(HWND wnd, const std::string& path, con
 	//out = FB::wstring_to_utf8(std::wstring(pszFilePath));
     
 								
-	//if(true == false)
+	
  //   {
 	//	bool bMultipleFileSelected = multiple;
 
@@ -689,11 +621,8 @@ UINT CALLBACK FolderHook (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 					}
 				}
 				CommDlg_OpenSave_SetControlText(pNmhdr->hwndFrom, edt1, m_strPathList.c_str());
-			
-				
 			}
 
-	
 			else if (pNmhdr->code == CDN_FOLDERCHANGE)
 			{
 				//memset(&m_strPath, 0, sizeof(m_strPath));
@@ -722,8 +651,6 @@ std::wstring GetPath(HWND hwnd, UINT nMessage)
 
 	if (pWnd && IsWindow(pWnd))
 	{
-		
-		//
 		//szDir[0] = _T('\0');
 		SendMessage(pWnd, nMessage, sizeof(szDir)/sizeof(TCHAR)-2,
 			(LPARAM)(LPCTSTR)szDir);

@@ -25,7 +25,6 @@
 #include <string>
 #include "../DialogManager.h"
 
-//UINT CALLBACK FolderProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 UINT CALLBACK FolderHook(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 std::wstring GetPath(HWND hwnd, UINT nMessage);

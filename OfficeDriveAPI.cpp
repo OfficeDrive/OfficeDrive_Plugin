@@ -10,8 +10,10 @@
 #include "variant_list.h"
 #include "DOM/Document.h"
 #include "global/config.h"
-//#include <boost/filesystem.hpp>
-//#include <boost/filesystem/fstream.hpp>
+
+// #include <boost/filesystem.hpp>
+// #include <boost/filesystem/fstream.hpp>
+
 #include "PluginCore.h"
 #include "OfficeDriveAPI.h"
 
@@ -19,14 +21,13 @@
 #include "NPObjectAPI.h"
 #include "NpapiBrowserHost.h"
 #include "DialogManager.h"
-//#include "Win/DialogManagerWin.h"
-//#include "X11/DialogManagerX11.h"
-//#include "FileWatcher.h"
-//#include "SocketClient.cpp"
 
-//using namespace boost::filesystem;
-//using namespace FB;
-//using namespace FB::Npapi;
+// #include "Win/DialogManagerWin.h"
+// #include "X11/DialogManagerX11.h"
+
+// using namespace boost::filesystem;
+// using namespace FB;
+// using namespace FB::Npapi;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -46,7 +47,7 @@ FB::variant OfficeDriveAPI::loadlibrary(const FB::variant& lib)
 {
     void *handle;
 #ifdef FB_X11
-    handle = dlopen("/home/simon/src/firebreath-dev/build/bin/FBTestPlugin/npFBTestPlugin.so", RTLD_LAZY);
+    handle = dlopen(lib, RTLD_LAZY);
 #endif
     return handle;
 }
@@ -92,8 +93,8 @@ void OfficeDriveAPI::connect2()
 	
 int OfficeDriveAPI::connect()
 {
-	bool result;
-	std::string postdata = "launchFileSelect";
+	bool result = FALSE;
+	std::string postdata = NULL;
 
 	boost::optional<std::string> userId = getPlugin()->getParam("userId");
 	if (userId) {
