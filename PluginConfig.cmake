@@ -6,8 +6,8 @@
 #\**********************************************************/
 
 set(PLUGIN_NAME "OfficeDrive")
-set(PLUGIN_PREFIX "FBOD")
-set(COMPANY_NAME "foobarcorp")
+set(PLUGIN_PREFIX "NPOD")
+set(COMPANY_NAME "1Site1")
 
 # ActiveX constants:
 set(FBTYPELIB_NAME OfficeDriveLib)
@@ -33,22 +33,18 @@ else ( FB_PLATFORM_ARCH_32 )
 endif ( FB_PLATFORM_ARCH_32 )
 
 # these are the pieces that are relevant to using it from Javascript
-set(ACTIVEX_PROGID "foobarcorp.OfficeDrive")
-set(MOZILLA_PLUGINID "foobarcorp.com/OfficeDrive")
+set(ACTIVEX_PROGID "1Site1.OfficeDrive")
+set(MOZILLA_PLUGINID "1Site1.com/OfficeDrive")
 
 # strings
-set(FBSTRING_CompanyName "1site1.nl")
-set(FBSTRING_PluginDescription "OfficeDrive-NG")
+set(FBSTRING_CompanyName "1Site1.nl")
+set(FBSTRING_PluginDescription "OfficeDrive")
 set(FBSTRING_PLUGIN_VERSION "1.0.0.0")
-set(FBSTRING_LegalCopyright "Copyright 2013 1site1.nl")
-set(FBSTRING_PluginFileName "npOfficeDrive.so")
+set(FBSTRING_LegalCopyright "Copyright 2013 1Site1.nl")
+set(FBSTRING_PluginFileName "npOfficeDrive.dll")
 set(FBSTRING_ProductName "OfficeDrive")
 set(FBSTRING_FileExtents "")
-if ( FB_PLATFORM_ARCH_32 )
-    set(FBSTRING_PluginName "OfficeDrive")  # No 32bit postfix to maintain backward compatability.
-else ( FB_PLATFORM_ARCH_32 )
-    set(FBSTRING_PluginName "OfficeDrive_${FB_PLATFORM_ARCH_NAME}")
-endif ( FB_PLATFORM_ARCH_32 )
+set(FBSTRING_PluginName "OfficeDrive")  # No 32bit postfix to maintain backward compatability.
 set(FBSTRING_MIMEType "application/x-OfficeDrive")
 
 # Uncomment this next line if you're not planning on your plugin doing

@@ -34,29 +34,55 @@ DialogManager* DialogManager::get()
 }
 
 
-void DialogManagerMac::OpenFolderDialog(const FB::BrowserHostPtr& host, FB::PluginWindow* win, const PathCallback& cb)
+void DialogManagerMac::OpenFolderDialog(const FB::BrowserHostPtr& host, FB::PluginWindow* win, const PathCallback& cb, const int fileType, const bool multiple, const int fileOperation)
 {
-    host->ScheduleOnMainThread(boost::shared_ptr<DialogManagerMac>(), boost::bind(&DialogManagerMac::_showFolderDialog, this, win, cb));
+    host->ScheduleOnMainThread(boost::shared_ptr<DialogManagerMac>(), boost::bind(&DialogManagerMac::_showFolderDialog, this, win, cb, fileType, multiple));
 }
 
-void DialogManagerMac::_showFolderDialog(FB::PluginWindow* win, const PathCallback& cb)
+void DialogManagerMac::OpenFileDialog(const FB::BrowserHostPtr& host, FB::PluginWindow* win, const PathCallback& cb, const int fileType, const bool multiple, const int fileOperation)
+{
+    host->ScheduleOnMainThread(boost::shared_ptr<DialogManagerMac>(), boost::bind(&DialogManagerMac::_showFolderDialog, this, win, cb, fileType, multiple));
+}
+
+
+void DialogManagerMac::_showFolderDialog(FB::PluginWindow* win, const PathCallback& cb, const int fileType, const bool multiple)
 {
     FBLOG_INFO("DialogManagerMac", "Showing folder dialog");
     std::string out;
     int result;
+
     NSAutoreleasePool* pool = [NSAutoreleasePool new];
     NSOpenPanel *oPanel = [NSOpenPanel openPanel];
-    
-    [oPanel setAllowsMultipleSelection:NO];
-    [oPanel setCanChooseFiles:NO];
+
     [oPanel setCanChooseDirectories:YES];
+
+    if (multiple) {
+		[oPanel setAllowsMultipleSelection:YES];
+    } else {
+ 		[oPanel setAllowsMultipleSelection:NO];
+    }
+	
+	if (fileType == 2) {
+	    [oPanel setCanChooseFiles:NO];
+	} else {
+	    [oPanel setCanChooseFiles:YES];
+	}
+
     result = [oPanel runModalForDirectory:nil
                                      file:nil types:nil];
     
     if (result == NSOKButton) {
         NSArray *filesToOpen = [oPanel filenames];
-        NSString *aFile = [filesToOpen objectAtIndex:0];
-        out = [aFile cStringUsingEncoding:[NSString defaultCStringEncoding]];
+
+    	int i = 0;
+	NSString *aSelection = [NSString stringWithFormat:@"%s",""];
+	for (i=0; i < filesToOpen.count; i++) {
+    	    NSString *aFile = [filesToOpen objectAtIndex:i];
+	    aSelection = [ aSelection stringByAppendingString:aFile];
+	    aSelection = [ aSelection stringByAppendingFormat:@"%s","::"];
+	}
+     
+		out = [aSelection cStringUsingEncoding:[NSString defaultCStringEncoding]];
         FBLOG_INFO("DialogManagerMac", "Folder selected: " << out);
     }
     [pool release];
