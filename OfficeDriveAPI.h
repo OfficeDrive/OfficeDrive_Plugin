@@ -59,6 +59,7 @@ public:
 		registerMethod("onload",        make_method(this, &OfficeDriveAPI::startDaemon));
         registerMethod("startDaemon",        make_method(this, &OfficeDriveAPI::startDaemon));
         registerMethod("stopDaemon",        make_method(this, &OfficeDriveAPI::stopDaemon));
+		registerMethod("updateDaemon",		make_method(this, &OfficeDriveAPI::updateDaemon));
         registerMethod("loadlibrary",      make_method(this, &OfficeDriveAPI::loadlibrary));
         registerMethod("testEvent", make_method(this, &OfficeDriveAPI::testEvent));
        // registerMethod("getWindow", make_method(this,&PluginWindow:: GetWindow));
@@ -117,7 +118,10 @@ public:
 	void call(const std::string& cmd);
     
 	int connect();
+	
 	void connect2();
+
+	int updateDaemon();
 
 	void connectCallback(const bool success, const FB::HeaderMap& headers, 
 						 const boost::shared_array<uint8_t>& data, const size_t size);

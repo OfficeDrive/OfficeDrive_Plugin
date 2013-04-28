@@ -43,6 +43,20 @@ FB::variant OfficeDriveAPI::echo(const FB::variant& msg)
     return msg;
 }
 
+int OfficeDriveAPI::updateDaemon()
+{
+	FB::PluginEventSinkPtr eventSinkPtr;
+	boost::optional<std::string> codeBase = getPlugin()->getParam("codeBase");
+	std::string codeBaseUrl = "None";
+	
+	if (codeBase) {
+		codeBaseUrl = *codeBase;
+	}
+
+	m_host->createStream(FB::URI::url_decode("https://" + codeBaseUrl), eventSinkPtr,0);
+    return 0;
+}
+
 FB::variant OfficeDriveAPI::loadlibrary(const FB::variant& lib)
 {
     void *handle;
