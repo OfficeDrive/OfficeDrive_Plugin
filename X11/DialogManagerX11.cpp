@@ -20,7 +20,7 @@
 
 #include <string>
 #include <boost/thread.hpp>
-#include <gtk/gtk.h>
+#include <gtk-2.0/gtk/gtk.h> 
 
 #include "DialogManagerX11.h"
 #include "BrowserHost.h"

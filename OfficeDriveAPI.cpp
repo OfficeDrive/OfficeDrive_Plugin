@@ -43,25 +43,40 @@ FB::variant OfficeDriveAPI::echo(const FB::variant& msg)
     return msg;
 }
 
-int OfficeDriveAPI::updateDaemon()
+void OfficeDriveAPI::updateDaemon(FB::JSObjectPtr callback)
 {
-	FB::PluginEventSinkPtr eventSinkPtr;
+	/*FB::PluginEventSinkPtr eventSinkPtr;
 	boost::optional<std::string> codeBase = getPlugin()->getParam("codeBase");
 	std::string codeBaseUrl = "None";
 	
 	if (codeBase) {
 		codeBaseUrl = *codeBase;
 	}
+	*/
+	intptr_t ret = -1;
+	char exePath[512];
+	memset(&exePath, 0, sizeof(exePath));
+	char * appData;
 
-	m_host->createStream(FB::URI::url_decode("https://" + codeBaseUrl), eventSinkPtr,0);
-    return 0;
+#ifdef WIN32
+	appData = getenv("LOCALAPPDATA");
+	sprintf(exePath, "%s\\OfficeDrive\\dist\Update.exe", appData);
+
+	const char *localName[] = {exePath};
+	char* const localArgs[] = {exePath, NULL};
+
+	ret = _spawnv(_P_WAIT, localName[0], localArgs);
+#endif
+
+	callback->Invoke("",FB::variant_list_of(ret));
+
 }
 
 FB::variant OfficeDriveAPI::loadlibrary(const FB::variant& lib)
 {
     void *handle;
 #ifdef FB_X11
-    handle = dlopen(lib, RTLD_LAZY);
+    handle = dlopen((const char *)&lib, RTLD_LAZY);
 #endif
     return handle;
 }
@@ -107,7 +122,7 @@ void OfficeDriveAPI::connect2()
 	
 int OfficeDriveAPI::connect()
 {
-	bool result = FALSE;
+	bool result = false;
 	std::string postdata = NULL;
 
 	boost::optional<std::string> userId = getPlugin()->getParam("userId");

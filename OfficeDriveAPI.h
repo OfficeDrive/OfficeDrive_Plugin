@@ -121,7 +121,7 @@ public:
 	
 	void connect2();
 
-	int updateDaemon();
+	void updateDaemon(FB::JSObjectPtr callback);
 
 	void connectCallback(const bool success, const FB::HeaderMap& headers, 
 						 const boost::shared_array<uint8_t>& data, const size_t size);

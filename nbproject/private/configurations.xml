@@ -1,11 +1,77 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configurationDescriptor version="84">
-  <projectmakefile>Makefile</projectmakefile>
+<configurationDescriptor version="88">
+  <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
+    <df root="." name="officedrive">
+      <df name="build">
+        <df name="Debug">
+        </df>
+      </df>
+      <df name="Chrome">
+        <df name="chromepackage">
+        </df>
+      </df>
+      <df name="CMakeFiles">
+      </df>
+      <df name="Mac">
+        <df name="bundle_template">
+        </df>
+        <df name="dmg_template">
+        </df>
+        <in>DialogManagerMac.h</in>
+        <in>DialogManagerMac.mm</in>
+      </df>
+      <df name="Win">
+        <df name="WiX">
+        </df>
+        <in>CommonFileDialogModes.cpp</in>
+        <in>DialogManagerWin.cpp</in>
+        <in>DialogManagerWin.h</in>
+        <in>ShellHelpers.h</in>
+        <in>atlapp.h</in>
+        <in>atlcrack.h</in>
+        <in>atlctrls.h</in>
+        <in>atlctrlw.h</in>
+        <in>atlctrlx.h</in>
+        <in>atlddx.h</in>
+        <in>atldlgs.h</in>
+        <in>atldwm.h</in>
+        <in>atlfind.h</in>
+        <in>atlframe.h</in>
+        <in>atlgdi.h</in>
+        <in>atlmisc.h</in>
+        <in>atlprint.h</in>
+        <in>atlres.h</in>
+        <in>atlresce.h</in>
+        <in>atlscrl.h</in>
+        <in>atlsplit.h</in>
+        <in>atltheme.h</in>
+        <in>atluser.h</in>
+        <in>atlwince.h</in>
+        <in>atlwinx.h</in>
+        <in>lb_selitems.cpp</in>
+      </df>
+      <df name="X11">
+        <in>DialogManagerX11.cpp</in>
+        <in>DialogManagerX11.h</in>
+      </df>
+      <df name="xpi">
+        <df name="content">
+        </df>
+      </df>
+      <in>DialogManager.h</in>
+      <in>Factory.cpp</in>
+      <in>OfficeDrive.cpp</in>
+      <in>OfficeDrive.h</in>
+      <in>OfficeDriveAPI.cpp</in>
+      <in>OfficeDriveAPI.h</in>
+    </df>
+  </logicalFolder>
+  <projectmakefile>../../build/projects/OfficeDrive/Makefile</projectmakefile>
   <confs>
     <conf name="Default" type="0">
       <toolsSet>
         <developmentServer>localhost</developmentServer>
-        <platform>3</platform>
+        <platform>2</platform>
       </toolsSet>
       <dbx_gdbdebugger version="1">
         <gdb_pathmaps>
@@ -27,7 +93,7 @@
           <runcommandpicklistitem>"${OUTPUT_PATH}"</runcommandpicklistitem>
         </runcommandpicklist>
         <runcommand>"${OUTPUT_PATH}"</runcommand>
-        <rundir>.</rundir>
+        <rundir>../../build/projects/OfficeDrive</rundir>
         <buildfirst>true</buildfirst>
         <terminal-type>0</terminal-type>
         <remove-instrumentation>0</remove-instrumentation>

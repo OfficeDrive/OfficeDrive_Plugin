@@ -1,87 +1,128 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configurationDescriptor version="84">
+<configurationDescriptor version="88">
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
-    <df name="OfficeDrive" root=".">
-      <df name="build">
-        <df name="Debug">
-        </df>
-      </df>
-      <df name="Chrome">
-        <df name="chromepackage">
-        </df>
-      </df>
-      <df name="CMakeFiles">
-      </df>
+    <df root="." name="officedrive">
       <df name="Mac">
-        <df name="bundle_template">
-        </df>
-        <df name="dmg_template">
-        </df>
         <in>DialogManagerMac.h</in>
         <in>DialogManagerMac.mm</in>
       </df>
       <df name="Win">
-        <df name="WiX">
-        </df>
+        <in>CommonFileDialogModes.cpp</in>
         <in>DialogManagerWin.cpp</in>
         <in>DialogManagerWin.h</in>
+        <in>ShellHelpers.h</in>
+        <in>atlapp.h</in>
+        <in>atldlgs.h</in>
+        <in>lb_selitems.cpp</in>
       </df>
       <df name="X11">
         <in>DialogManagerX11.cpp</in>
         <in>DialogManagerX11.h</in>
       </df>
-      <df name="xpi">
-        <df name="content">
-        </df>
-      </df>
       <in>DialogManager.h</in>
       <in>Factory.cpp</in>
-      <in>FileWatcher.h</in>
-      <in>Server_config.h</in>
-      <in>dlfcn.h</in>
       <in>OfficeDrive.cpp</in>
       <in>OfficeDrive.h</in>
       <in>OfficeDriveAPI.cpp</in>
       <in>OfficeDriveAPI.h</in>
-      <in>unistd.h</in>
     </df>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
                    projectFiles="false"
                    kind="IMPORTANT_FILES_FOLDER">
-      <itemPath>CMakeLists.txt</itemPath>
-      <itemPath>Makefile</itemPath>
+      <itemPath>../../build/projects/OfficeDrive/Makefile</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceFolderFilter>^(nbproject)$</sourceFolderFilter>
   <sourceRootList>
     <Elem>.</Elem>
   </sourceRootList>
-  <projectmakefile>Makefile</projectmakefile>
+  <projectmakefile>../../build/projects/OfficeDrive/Makefile</projectmakefile>
   <confs>
     <conf name="Default" type="0">
       <toolsSet>
         <remote-sources-mode>LOCAL_SOURCES</remote-sources-mode>
-        <compilerSet>VCC4N|VCC4N</compilerSet>
+        <compilerSet>default</compilerSet>
       </toolsSet>
       <codeAssistance>
       </codeAssistance>
       <makefileType>
         <makeTool>
-          <buildCommandWorkingDir>.</buildCommandWorkingDir>
+          <buildCommandWorkingDir>../../build/projects/OfficeDrive</buildCommandWorkingDir>
           <buildCommand>${MAKE} -f Makefile</buildCommand>
           <cleanCommand>${MAKE} -f Makefile clean</cleanCommand>
           <executablePath></executablePath>
         </makeTool>
       </makefileType>
+      <item path="DialogManager.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="Factory.cpp" ex="false" tool="1" flavor2="4">
         <ccTool>
           <incDir>
-            <pElem></pElem>
+            <pElem>../..</pElem>
+            <pElem>../../src/3rdParty/gecko-sdk/includes</pElem>
+            <pElem>../../src/NpapiCore</pElem>
+            <pElem>../../src/ActiveXCore</pElem>
+            <pElem>../../src/ScriptingCore</pElem>
+            <pElem>../../src/PluginAuto/X11</pElem>
+            <pElem>../../src/PluginAuto</pElem>
+            <pElem>../../src/PluginCore</pElem>
+            <pElem>../../build/projects/OfficeDrive/gen</pElem>
+            <pElem>../../src/3rdParty/boost</pElem>
+            <pElem>../../src/config</pElem>
+            <pElem>../../build/projects/OfficeDrive</pElem>
           </incDir>
+          <preprocessorList>
+            <Elem>BOOST_ALL_NO_LIB=1</Elem>
+            <Elem>FB_X11=1</Elem>
+            <Elem>OfficeDrive_EXPORTS</Elem>
+            <Elem>UNICODE</Elem>
+            <Elem>XP_UNIX</Elem>
+            <Elem>_UNICODE</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
+      <item path="Mac/DialogManagerMac.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="Mac/DialogManagerMac.mm" ex="false" tool="1" flavor2="4">
+        <ccTool>
+        </ccTool>
+      </item>
+      <item path="OfficeDrive.cpp" ex="false" tool="1" flavor2="4">
+        <ccTool>
+        </ccTool>
+      </item>
+      <item path="OfficeDrive.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="OfficeDriveAPI.cpp" ex="false" tool="1" flavor2="4">
+        <ccTool>
+          <incDir>
+            <pElem>../..</pElem>
+            <pElem>../../src/3rdParty/gecko-sdk/includes</pElem>
+            <pElem>../../src/NpapiCore</pElem>
+            <pElem>../../src/ActiveXCore</pElem>
+            <pElem>../../src/ScriptingCore</pElem>
+            <pElem>../../src/PluginAuto/X11</pElem>
+            <pElem>../../src/PluginAuto</pElem>
+            <pElem>../../src/PluginCore</pElem>
+            <pElem>../../build/projects/OfficeDrive/gen</pElem>
+            <pElem>../../src/3rdParty/boost</pElem>
+            <pElem>../../src/config</pElem>
+            <pElem>../../build/projects/OfficeDrive</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>BOOST_ALL_NO_LIB=1</Elem>
+            <Elem>FB_X11=1</Elem>
+            <Elem>OfficeDrive_EXPORTS</Elem>
+            <Elem>UNICODE</Elem>
+            <Elem>XP_UNIX</Elem>
+            <Elem>_UNICODE</Elem>
+          </preprocessorList>
+        </ccTool>
+      </item>
+      <item path="OfficeDriveAPI.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="Win/CommonFileDialogModes.cpp" ex="false" tool="1" flavor2="4">
         <ccTool>
         </ccTool>
       </item>
@@ -89,45 +130,50 @@
         <ccTool>
         </ccTool>
       </item>
+      <item path="Win/DialogManagerWin.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="Win/ShellHelpers.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="Win/atlapp.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="Win/atldlgs.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="Win/lb_selitems.cpp" ex="false" tool="1" flavor2="4">
+        <ccTool>
+        </ccTool>
+      </item>
       <item path="X11/DialogManagerX11.cpp" ex="false" tool="1" flavor2="4">
         <ccTool>
         </ccTool>
       </item>
-      <folder path="OfficeDrive/Mac">
-        <ccTool>
-          <incDir>
-            <pElem>Mac</pElem>
-          </incDir>
-        </ccTool>
-      </folder>
-      <folder path="OfficeDrive/Win">
-        <ccTool>
-          <incDir>
-            <pElem>Win</pElem>
-          </incDir>
-        </ccTool>
-      </folder>
-      <folder path="OfficeDrive/X11">
-        <ccTool>
-          <incDir>
-            <pElem>X11</pElem>
-          </incDir>
-        </ccTool>
-      </folder>
-      <item path="OfficeDrive.cpp" ex="false" tool="1" flavor2="4">
-        <ccTool>
-          <incDir>
-            <pElem></pElem>
-          </incDir>
-        </ccTool>
+      <item path="X11/DialogManagerX11.h" ex="false" tool="3" flavor2="0">
       </item>
-      <item path="OfficeDriveAPI.cpp" ex="false" tool="1" flavor2="4">
+      <folder path="officedrive/X11">
         <ccTool>
           <incDir>
-            <pElem></pElem>
+            <pElem>../..</pElem>
+            <pElem>../../src/3rdParty/gecko-sdk/includes</pElem>
+            <pElem>../../src/NpapiCore</pElem>
+            <pElem>../../src/ActiveXCore</pElem>
+            <pElem>../../src/ScriptingCore</pElem>
+            <pElem>../../src/PluginAuto/X11</pElem>
+            <pElem>../../src/PluginAuto</pElem>
+            <pElem>../../src/PluginCore</pElem>
+            <pElem>../../build/projects/OfficeDrive/gen</pElem>
+            <pElem>../../src/3rdParty/boost</pElem>
+            <pElem>../../src/config</pElem>
+            <pElem>../../build/projects/OfficeDrive</pElem>
           </incDir>
+          <preprocessorList>
+            <Elem>BOOST_ALL_NO_LIB=1</Elem>
+            <Elem>FB_X11=1</Elem>
+            <Elem>OfficeDrive_EXPORTS</Elem>
+            <Elem>UNICODE</Elem>
+            <Elem>XP_UNIX</Elem>
+            <Elem>_UNICODE</Elem>
+          </preprocessorList>
         </ccTool>
-      </item>
+      </folder>
     </conf>
   </confs>
 </configurationDescriptor>
