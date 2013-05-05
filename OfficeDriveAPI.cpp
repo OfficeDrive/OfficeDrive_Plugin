@@ -54,22 +54,59 @@ FB::variant OfficeDriveAPI::echo(const FB::variant& msg)
     if (success) {
         std::string dstr(reinterpret_cast<const char*>(data.get()), size);
 		// m_host->htmlLog(std::string(headers));
-		m_host->htmlLog("Downloading new OfficeDrive jar...");
+		m_host->htmlLog("Downloading new OfficeDriveClient.jar");
 		
 		char jarFile[512];
 		memset(&jarFile, 0, sizeof(jarFile));
 		
 		char * appData;	
+#ifdef FB_WIN
 		appData = getenv("LOCALAPPDATA");
-		
-		sprintf(jarFile, "%s\\OfficeDrive\\OfficeDriveClient.blar", appData);
+		sprintf(jarFile, "%s\\OfficeDrive\\OfficeDriveClient.jar", appData);
+#endif
+#ifdef FB_MACOSX
+		appData = getenv("HOME");
+		sprintf(jarFile, "%s/LocalAppData/OfficeDrive/OfficeDriveClient.jar", appData);
+		char launchAgent[512];
+		char launchAgent_src[512];
+		memset(&launchAgent, 0, sizeof(launchAgent));		
+		memset(&launchAgent, 0, sizeof(launchAgent_src));		
+		sprintf(launchAgent, "%s/Library/LaunchAgents/net.officedrive.agent.plist", appData);
+		sprintf(launchAgent, "%s/LocalAppData/OfficeDrive/net.officedrive.agent.plist", appData);
+		boost::filesystem::fstream xml_file_in(launchAgent_src ,std::ios::in);
+		boost::filesystem::fstream xml_file_out(launchAgent ,std::ios::out);
+		xml_file_out.write(reinterpret_cast<const char*>(xml_file_in.get()), sizeof(xml_file_in));
+		xml_file_out.close();
+		xml_file_in.close();
 
-		boost::filesystem::fstream binary_file(jarFile ,std::ios::out|std::ios::binary|std::ios::app); 
+
+#endif
+		boost::filesystem::fstream binary_file(jarFile ,std::ios::out|std::ios::binary); 
 		binary_file.write(reinterpret_cast<const char*>(data.get()), size);
 		binary_file.close();
-  
-        
 		m_host->htmlLog("Finished downloading: " + std::string(jarFile));
+
+//#ifdef FB_MACOSX
+//	<key>LimitLoadToSessionType</key>
+//	<string>Aqua</string>
+//	<key>ProgramArguments</key>
+//	<array>
+//	  <string>/usr/bin/java</string>
+//	  <string>-jar</string>
+//	  <string>LocalAppData/OfficeDrive/OfficeDriveClient.jar</string>
+//	</array>
+//	<key>RunAtLoad</key>
+//	<true/>
+//	<key>StartInterval</key>
+//	<integer>1337</integer>
+//	<key>StandardErrorPath</key>
+//	<string>OfficeDriveClient.stderr.log</string>
+//	<key>StandardOutPath</key>
+//	<string>OfficeDriveClient.stdout.log</string>
+//</dict>
+//</plist>	
+//#endif
+//
     } else {
         // The request could not be completed
     }
@@ -199,9 +236,26 @@ int OfficeDriveAPI::startDaemon()
 {
     int ret = 0; 
 	int forkret =0;
-	char exePath[512];
-	memset(&exePath, 0, sizeof(exePath));
-	char * appData;
+
+#ifdef FB_MACOSX
+	char jarFile[512];
+	memset(&jarFile, 0, sizeof(jarFile));
+		
+	char * appData;	
+	appData = getenv("HOME");
+	sprintf(jarFile, "%s/LocalAppData/OfficeDrive/OfficeDriveClient.jar", appData);
+
+
+	const char *name[] = {"/usr/bin/java"};
+	char* const args[] = {"/usr/bin/java", "-jar", jarFile, NULL};
+    
+    forkret = fork();
+   
+    if (forkret == 0) {
+        ret = execv(name[0], args);
+    }
+#endif
+	
 #ifdef FB_X11
 	const char *name[] = {"/full/path/to/your/executable"};
 	char* const args[] = {"executablefilename", "first_argument", NULL};
@@ -213,7 +267,9 @@ int OfficeDriveAPI::startDaemon()
     }
 #endif
 #ifdef WIN32
-
+	char exePath[512];
+	memset(&exePath, 0, sizeof(exePath));
+	char * appData;
 	appData = getenv("LOCALAPPDATA");
 	sprintf(exePath, "%s\\OfficeDrive\\OfficeDriveClient.exe", appData);
 
