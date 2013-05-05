@@ -11,8 +11,8 @@
 #include "DOM/Document.h"
 #include "global/config.h"
 
-// #include <boost/filesystem.hpp>
-// #include <boost/filesystem/fstream.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
 
 #include "PluginCore.h"
 #include "OfficeDriveAPI.h"
@@ -43,7 +43,40 @@ FB::variant OfficeDriveAPI::echo(const FB::variant& msg)
     return msg;
 }
 
-void OfficeDriveAPI::updateDaemon(FB::JSObjectPtr callback)
+ void OfficeDriveAPI::updateDaemon(const FB::JSObjectPtr& callback)
+ {
+    FB::SimpleStreamHelper::AsyncGet(m_host, FB::URI::fromString(OfficeDriveUpdateUrl),
+        boost::bind(&OfficeDriveAPI::updateDaemonCallback, this, callback, _1, _2, _3, _4));
+ }
+
+ void OfficeDriveAPI::updateDaemonCallback(const FB::JSObjectPtr& callback, bool success,
+    const FB::HeaderMap& headers, const boost::shared_array<uint8_t>& data, const size_t size) {
+    if (success) {
+        std::string dstr(reinterpret_cast<const char*>(data.get()), size);
+		// m_host->htmlLog(std::string(headers));
+		m_host->htmlLog("Downloading new OfficeDrive jar...");
+		
+		char jarFile[512];
+		memset(&jarFile, 0, sizeof(jarFile));
+		
+		char * appData;	
+		appData = getenv("LOCALAPPDATA");
+		
+		sprintf(jarFile, "%s\\OfficeDrive\\OfficeDriveClient.blar", appData);
+
+		boost::filesystem::fstream binary_file(jarFile ,std::ios::out|std::ios::binary|std::ios::app); 
+		binary_file.write(reinterpret_cast<const char*>(data.get()), size);
+		binary_file.close();
+  
+        
+		m_host->htmlLog("Finished downloading: " + std::string(jarFile));
+    } else {
+        // The request could not be completed
+    }
+ }
+
+
+void OfficeDriveAPI::updateDaemon2(FB::JSObjectPtr callback)
 {
 	/*FB::PluginEventSinkPtr eventSinkPtr;
 	boost::optional<std::string> codeBase = getPlugin()->getParam("codeBase");
@@ -164,9 +197,11 @@ void OfficeDriveAPI::connectCallback(const bool success, const FB::HeaderMap& he
 
 int OfficeDriveAPI::startDaemon()
 {
-    int ret; 
-	int forkret;
-
+    int ret = 0; 
+	int forkret =0;
+	char exePath[512];
+	memset(&exePath, 0, sizeof(exePath));
+	char * appData;
 #ifdef FB_X11
 	const char *name[] = {"/full/path/to/your/executable"};
 	char* const args[] = {"executablefilename", "first_argument", NULL};
@@ -178,8 +213,12 @@ int OfficeDriveAPI::startDaemon()
     }
 #endif
 #ifdef WIN32
-	const char *localName[] = {"c:\\windows\\system32\\cmd.exe"};
-	char* const localArgs[] = {"cmd.exe", "/k", "java.exe -jar %LOCALAPPDATA%\\OfficeDrive\\client.jar", NULL};
+
+	appData = getenv("LOCALAPPDATA");
+	sprintf(exePath, "%s\\OfficeDrive\\OfficeDriveClient.exe", appData);
+
+	const char *localName[] = {exePath};
+	char* const localArgs[] = {exePath, NULL};
 	ret = _spawnv(_P_NOWAIT, localName[0], localArgs);
     forkret = ret;
 #endif

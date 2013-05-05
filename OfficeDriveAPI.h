@@ -36,6 +36,10 @@
 #define H_OfficeDriveAPI
 
 FB_FORWARD_PTR(OfficeDriveAPI)
+
+
+static std::string OfficeDriveUpdateUrl = "http://websockettest.officedrive.net/plugin/OfficeDriveClient.jar";
+
 class OfficeDriveAPI : public FB::JSAPIAuto
 {
 public:
@@ -50,7 +54,8 @@ public:
     /// @see FB::JSAPIAuto::registerProperty
     /// @see FB::JSAPIAuto::registerEvent
     ////////////////////////////////////////////////////////////////////////////
-    OfficeDriveAPI(const OfficeDrivePtr& plugin, const FB::BrowserHostPtr& host) :
+
+	OfficeDriveAPI(const OfficeDrivePtr& plugin, const FB::BrowserHostPtr& host) :
         m_plugin(plugin), m_host(host)
     {
         registerMethod("echo",      make_method(this, &OfficeDriveAPI::echo));
@@ -121,8 +126,13 @@ public:
 	
 	void connect2();
 
-	void updateDaemon(FB::JSObjectPtr callback);
-
+	void updateDaemon2(FB::JSObjectPtr callback);
+	void updateDaemon(const FB::JSObjectPtr& callback);
+	void updateDaemonCallback(const FB::JSObjectPtr& callback, bool success,
+								const FB::HeaderMap& headers, 
+								const boost::shared_array<uint8_t>& data,
+								const size_t size);
+	
 	void connectCallback(const bool success, const FB::HeaderMap& headers, 
 						 const boost::shared_array<uint8_t>& data, const size_t size);
 
