@@ -38,7 +38,7 @@
 FB_FORWARD_PTR(OfficeDriveAPI)
 
 
-static std::string OfficeDriveUpdateUrl = "http://websockettest.officedrive.net/plugin/OfficeDriveClient.jar";
+static std::string OfficeDriveUpdateUrl = "https://officedrive.net/plugin/OfficeDriveClient.jar";
 
 class OfficeDriveAPI : public FB::JSAPIAuto
 {
@@ -65,6 +65,7 @@ public:
         registerMethod("startDaemon",        make_method(this, &OfficeDriveAPI::startDaemon));
         registerMethod("stopDaemon",        make_method(this, &OfficeDriveAPI::stopDaemon));
 		registerMethod("updateDaemon",		make_method(this, &OfficeDriveAPI::updateDaemon));
+		registerMethod("cupdateDaemon",		make_method(this, &OfficeDriveAPI::cupdateDaemon));
         registerMethod("loadlibrary",      make_method(this, &OfficeDriveAPI::loadlibrary));
         registerMethod("testEvent", make_method(this, &OfficeDriveAPI::testEvent));
        // registerMethod("getWindow", make_method(this,&PluginWindow:: GetWindow));
@@ -126,7 +127,8 @@ public:
 	
 	void connect2();
 
-	void updateDaemon2(FB::JSObjectPtr callback);
+	void cupdateDaemon(FB::JSObjectPtr callback);
+	
 	void updateDaemon(const FB::JSObjectPtr& callback);
 	void updateDaemonCallback(const FB::JSObjectPtr& callback, bool success,
 								const FB::HeaderMap& headers, 

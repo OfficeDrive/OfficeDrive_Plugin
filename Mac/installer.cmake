@@ -15,10 +15,9 @@ add_custom_command(
     #Give an icon to your bundle
     COMMAND ${CMD_SIPS} -i ${CMAKE_CURRENT_SOURCE_DIR}/Mac/icon.png
     COMMAND ${CMD_DEREZ} -only icns ${CMAKE_CURRENT_SOURCE_DIR}/Mac/icon.png > ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/tempicns.rsrc
-    COMMAND ${CMD_REZ} -append ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/tempicns.rsrc -o `printf "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/dmg_template/${PLUGIN_NAME}.plugin/Icon\r"` 
-
+    COMMAND ${CMD_REZ} -append ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/tempicns.rsrc -o `printf "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/dmg_template/${PLUGIN_NAME}.plugin/Icon\r"`
     COMMAND ${CMD_SETFILE} -a C ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/dmg_template/${PLUGIN_NAME}.plugin/
-    COMMAND ${CMD_LN} -s /Library/Internet\ Plug-Ins ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/dmg_template/
+    COMMAND ${CMD_LN} -s $(CMAKE_CURRENT_SOURCE_DIR)/../../../../Library/Internet\ Plug-Ins ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/dmg_template/
     COMMAND ${CMD_MV} ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/dmg_template/Internet\ Plug-Ins ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/dmg_template/Plugins
 
     #Create the DMG

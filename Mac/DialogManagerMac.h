@@ -30,9 +30,10 @@ class DialogManagerMac : public DialogManager
 {
 public:
     void OpenFolderDialog(const FB::BrowserHostPtr& host, FB::PluginWindow* win, const PathCallback& cb, const int fileType, const bool multiple, const int fileOperation);
-    void _showFolderDialog(FB::PluginWindow* win, const PathCallback& cb, const int fileType, const bool multiple);
+    void _showFolderDialog(FB::PluginWindow* win, const PathCallback& cb, const int fileType, const bool multiple, const int fileOperation);
+	void _showSaveFileDialog(FB::PluginWindow* win, const PathCallback& cb, const int fileType, const bool multiple, const int fileOperation);
      void OpenFileDialog(const FB::BrowserHostPtr& host, FB::PluginWindow* win, const PathCallback& cb, const int fileType, const bool multiple, const int fileOperation);
-//    void _showFileDialog(FB::PluginWindow* win, const PathCallback& cb);
+	void SaveFileDialog(const FB::BrowserHostPtr& host, FB::PluginWindow* win, const PathCallback& cb, const int fileType, const bool multiple, const int fileOperation);
     
 protected:
     DialogManagerMac() {};

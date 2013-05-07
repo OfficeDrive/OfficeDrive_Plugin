@@ -36,16 +36,58 @@ DialogManager* DialogManager::get()
 
 void DialogManagerMac::OpenFolderDialog(const FB::BrowserHostPtr& host, FB::PluginWindow* win, const PathCallback& cb, const int fileType, const bool multiple, const int fileOperation)
 {
-    host->ScheduleOnMainThread(boost::shared_ptr<DialogManagerMac>(), boost::bind(&DialogManagerMac::_showFolderDialog, this, win, cb, fileType, multiple));
+    host->ScheduleOnMainThread(boost::shared_ptr<DialogManagerMac>(), boost::bind(&DialogManagerMac::_showFolderDialog, this, win, cb, fileType, multiple, fileOperation));
 }
 
 void DialogManagerMac::OpenFileDialog(const FB::BrowserHostPtr& host, FB::PluginWindow* win, const PathCallback& cb, const int fileType, const bool multiple, const int fileOperation)
+{  
+    if (fileOperation == 2) {
+    host->ScheduleOnMainThread(boost::shared_ptr<DialogManagerMac>(), boost::bind(&DialogManagerMac::_showSaveFileDialog, this, win, cb, fileType, multiple, fileOperation));
+    } else {
+    host->ScheduleOnMainThread(boost::shared_ptr<DialogManagerMac>(), boost::bind(&DialogManagerMac::_showFolderDialog, this, win, cb, fileType, multiple, fileOperation));
+}
+}
+
+void DialogManagerMac::SaveFileDialog(const FB::BrowserHostPtr& host, FB::PluginWindow* win, const PathCallback& cb, const int fileType, const bool multiple, const int fileOperation)
 {
-    host->ScheduleOnMainThread(boost::shared_ptr<DialogManagerMac>(), boost::bind(&DialogManagerMac::_showFolderDialog, this, win, cb, fileType, multiple));
+    host->ScheduleOnMainThread(boost::shared_ptr<DialogManagerMac>(), boost::bind(&DialogManagerMac::_showSaveFileDialog, this, win, cb, fileType, multiple, fileOperation));
 }
 
 
-void DialogManagerMac::_showFolderDialog(FB::PluginWindow* win, const PathCallback& cb, const int fileType, const bool multiple)
+void DialogManagerMac::_showSaveFileDialog(FB::PluginWindow* win, const PathCallback& cb, const int fileType, const bool multiple, const int fileOperation)
+{
+    FBLOG_INFO("DialogManagerMac", "Showing save file dialog");
+    std::string out;
+    int result;
+
+    NSAutoreleasePool* pool = [NSAutoreleasePool new];
+    NSSavePanel *sPanel = [NSSavePanel savePanel];
+	
+    result = [sPanel runModalForDirectory:nil
+                                     file:nil types:nil];
+                                  
+    
+    if (result == NSOKButton) {
+        NSString *fileName = [sPanel nameFieldString];
+//	NSArray *filesToSave = [sPanel filenames];
+	
+//  	int i = 0;
+//		NSString *aSelection = [NSString stringWithFormat:@"%s",""];
+//		for (i=0; i < filesToSave.count; i++) {
+//			NSString *aFile = [filesToSave objectAtIndex:i];
+//			aSelection = [ aSelection stringByAppendingString:aFile];
+//			aSelection = [ aSelection stringByAppendingFormat:@"%s","::"];
+//		}
+     
+	out = [fileName cStringUsingEncoding:[NSString defaultCStringEncoding]];
+	FBLOG_INFO("DialogManagerMac", "Save fileName selected: " << out);
+    }
+	
+    [pool release];
+    cb(out);
+}
+	
+void DialogManagerMac::_showFolderDialog(FB::PluginWindow* win, const PathCallback& cb, const int fileType, const bool multiple, const int fileOperation)
 {
     FBLOG_INFO("DialogManagerMac", "Showing folder dialog");
     std::string out;

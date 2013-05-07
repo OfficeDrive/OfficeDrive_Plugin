@@ -12,8 +12,8 @@ on run args
       set background picture of opts to file ".background:background.png"
       set arrangement of opts to not arranged
       set icon size of opts to 80
-      set position of item thePluginName of container window to {130, 380}
-      set position of item "Plugins" of container window to {290, 380}
+      set position of item thePluginName of container window to {114, 323}
+      set position of item "Plugins" of container window to {372, 323}
       delay 5
       eject
     end tell

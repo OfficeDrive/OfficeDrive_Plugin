@@ -21,9 +21,6 @@
 #include "NPObjectAPI.h"
 #include "NpapiBrowserHost.h"
 #include "DialogManager.h"
-#ifdef FB_MACOSX
-#include <sys/stat.h>
-#endif
 
 // #include "Win/DialogManagerWin.h"
 // #include "X11/DialogManagerX11.h"
@@ -46,7 +43,7 @@ FB::variant OfficeDriveAPI::echo(const FB::variant& msg)
     return msg;
 }
 
-void OfficeDriveAPI::updateDaemon(const FB::JSObjectPtr& callback)
+ void OfficeDriveAPI::updateDaemon(const FB::JSObjectPtr& callback)
  {
     FB::SimpleStreamHelper::AsyncGet(m_host, FB::URI::fromString(OfficeDriveUpdateUrl),
         boost::bind(&OfficeDriveAPI::updateDaemonCallback, this, callback, _1, _2, _3, _4));
@@ -54,14 +51,10 @@ void OfficeDriveAPI::updateDaemon(const FB::JSObjectPtr& callback)
 
  void OfficeDriveAPI::updateDaemonCallback(const FB::JSObjectPtr& callback, bool success,
     const FB::HeaderMap& headers, const boost::shared_array<uint8_t>& data, const size_t size) {
-   
- int ret = -1;
-
- if (success) {
+    if (success) {
         std::string dstr(reinterpret_cast<const char*>(data.get()), size);
 		// m_host->htmlLog(std::string(headers));
 		m_host->htmlLog("Downloading new OfficeDriveClient.jar");
-		
 		
 		char jarFile[512];
 		memset(&jarFile, 0, sizeof(jarFile));
@@ -74,7 +67,6 @@ void OfficeDriveAPI::updateDaemon(const FB::JSObjectPtr& callback)
 #ifdef FB_MACOSX
 		appData = getenv("HOME");
 		sprintf(jarFile, "%s/LocalAppData/OfficeDrive/OfficeDriveClient.jar", appData);
-		/*
 		char launchAgent[512];
 		char launchAgent_src[512];
 		memset(&launchAgent, 0, sizeof(launchAgent));		
@@ -83,18 +75,16 @@ void OfficeDriveAPI::updateDaemon(const FB::JSObjectPtr& callback)
 		sprintf(launchAgent, "%s/LocalAppData/OfficeDrive/net.officedrive.agent.plist", appData);
 		boost::filesystem::fstream xml_file_in(launchAgent_src ,std::ios::in);
 		boost::filesystem::fstream xml_file_out(launchAgent ,std::ios::out);
-		xml_file_out.write(reinterpret_cast<const char*>(xml_file_in.get()), sizeof(xml_file_in));
+		xml_file_out.write(reinterpret_cast<const char*>(xml_file_in.read(sizeof(xml_file_in))));
 		xml_file_out.close();
 		xml_file_in.close();
-*/
+
 
 #endif
 		boost::filesystem::fstream binary_file(jarFile ,std::ios::out|std::ios::binary); 
 		binary_file.write(reinterpret_cast<const char*>(data.get()), size);
 		binary_file.close();
 		m_host->htmlLog("Finished downloading: " + std::string(jarFile));
-		ret = size;
-		callback->Invoke("",FB::variant_list_of(ret));
 
 //#ifdef FB_MACOSX
 //	<key>LimitLoadToSessionType</key>
@@ -118,14 +108,12 @@ void OfficeDriveAPI::updateDaemon(const FB::JSObjectPtr& callback)
 //#endif
 //
     } else {
-callback->Invoke("",FB::variant_list_of(ret));
- 
-// The request could not be completed
+        // The request could not be completed
     }
  }
 
 
-void OfficeDriveAPI::cupdateDaemon(FB::JSObjectPtr callback)
+void OfficeDriveAPI::updateDaemon2(FB::JSObjectPtr callback)
 {
 	/*FB::PluginEventSinkPtr eventSinkPtr;
 	boost::optional<std::string> codeBase = getPlugin()->getParam("codeBase");
@@ -140,7 +128,7 @@ void OfficeDriveAPI::cupdateDaemon(FB::JSObjectPtr callback)
 	memset(&exePath, 0, sizeof(exePath));
 	char * appData;
 
-#ifdef FB_WIN
+#ifdef WIN32
 	appData = getenv("LOCALAPPDATA");
 	sprintf(exePath, "%s\\OfficeDrive\\dist\Update.exe", appData);
 
@@ -246,7 +234,7 @@ void OfficeDriveAPI::connectCallback(const bool success, const FB::HeaderMap& he
 
 int OfficeDriveAPI::startDaemon()
 {
-  	int ret = 0; 
+    int ret = 0; 
 	int forkret =0;
 
 #ifdef FB_MACOSX
@@ -256,14 +244,7 @@ int OfficeDriveAPI::startDaemon()
 	char * appData;	
 	appData = getenv("HOME");
 	sprintf(jarFile, "%s/LocalAppData/OfficeDrive/OfficeDriveClient.jar", appData);
-	struct stat buf;
-	
-        ret = (stat(jarFile, &buf));
-	if (ret != 0 ) {
-	    	m_host->htmlLog("File jarFile not found!");
-	        m_host->htmlLog(jarFile);	
-		return ret;
-	}
+
 
 	const char *name[] = {"/usr/bin/java"};
 	char* const args[] = {"/usr/bin/java", "-jar", jarFile, NULL};
@@ -285,7 +266,7 @@ int OfficeDriveAPI::startDaemon()
         ret = execv(name[0], args);
     }
 #endif
-#ifdef FB_WIN
+#ifdef WIN32
 	char exePath[512];
 	memset(&exePath, 0, sizeof(exePath));
 	char * appData;

@@ -18,7 +18,7 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include "atlbase.h"
+#include <atlbase.h>
 
 //#include "win_common.h"
 //#include <commdlg.h>
@@ -316,7 +316,7 @@ void DialogManagerWin::_showFileDialog(HWND wnd, const std::string& path, const 
 	    opf.Flags = (OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT| OFN_NOVALIDATE) & ~OFN_ALLOWMULTISELECT;
 	}
 	if (fileOperation == 2) {
-		bool result;
+		BOOL result = false;
 		result = GetSaveFileName(&opf);
 		if (!result ) {
 			out = "Failed.";
